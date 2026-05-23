@@ -7,7 +7,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import AuthForm from './components/AuthForm';
 import { useAuth } from './context/AuthContext';
 
-const TOPICS = ['Tea', 'Coffee', 'QSR', 'Meat', 'Dairy', 'Spices'];
+const TOPICS = ['Tea', 'Coffee', 'QSR', 'Meat', 'Dairy', 'Spices','Alcohol'];
 
 function getDefaultDates() {
   const today = new Date();

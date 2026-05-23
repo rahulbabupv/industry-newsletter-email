@@ -41,6 +41,7 @@ const TOPIC_KEYWORDS = {
   Meat:   'meat industry OR poultry industry OR livestock OR meat processing OR meat export OR meat prices OR chicken prices OR mutton OR seafood',
   Dairy:  'dairy industry OR milk prices OR dairy market OR dairy export OR dairy production OR dairy brand OR milk production OR cheese OR butter OR paneer',
   Spices: 'spices industry OR spice export OR spice market OR spice prices OR pepper OR cardamom OR turmeric OR cumin OR coriander OR spice board',
+  Alcohol: 'alcohol industry OR liquor market OR spirits OR beer OR wine OR distillery OR alcohol production OR alcohol export OR alcohol prices OR liquor sales OR breweries OR distilleries OR alcohol regulation OR alcohol consumption',
 };
 
 // ─────────────────────────────────────────────────────────────
