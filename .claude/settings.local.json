@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\varna\\\\industry-newsletter /a /s 2>&1\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\varna\\\\industry-newsletter\\\\backend\\\\routes /a 2>&1\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\varna\\\\industry-newsletter\\\\frontend /a /s 2>&1\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\varna\\\\industry-newsletter\\\\frontend\\\\src /a /s 2>&1\")",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\Users\\\\varna\\\\industry-newsletter\\\\backend; npm run dev' -WindowStyle Normal)",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\Users\\\\varna\\\\industry-newsletter\\\\frontend; npm run dev' -WindowStyle Normal)",
+      "PowerShell(Start-Sleep -Seconds 5; try { $r = Invoke-WebRequest -Uri \"http://localhost:5000/api/health\" -UseBasicParsing -TimeoutSec 5; \"Backend: $\\($r.Content\\)\" } catch { \"Backend not yet ready: $_\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 5; \"Frontend: HTTP $\\($r.StatusCode\\)\" } catch { \"Frontend not yet ready: $_\" })",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force; \"Killed PID $_\" })",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\varna\\\\industry-newsletter\\\\backend\\\\middleware\")",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\varna\\\\industry-newsletter\\\\frontend\\\\src\\\\context\")"
+    ]
+  }
+}

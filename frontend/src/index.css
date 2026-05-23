@@ -1,0 +1,24 @@
+/* Pull in Tailwind's base reset, component classes, and utility classes */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scrolling for the "scroll to newsletter" behaviour */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Clamp multi-line text to a fixed number of lines */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
