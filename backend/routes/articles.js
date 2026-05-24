@@ -32,16 +32,15 @@ function extractSourceName(url) {
 }
 
 // Industry-specific keywords for each topic.
-// NewsAPI will match articles whose TITLE contains the topic word AND any of these terms.
-// This dramatically improves relevance vs. a plain keyword search.
+// Expanded to explicitly target commercial tenders, RFPs, and public procurement notices.
 const TOPIC_KEYWORDS = {
-  Tea:    'tea industry OR tea market OR tea prices OR tea export OR tea auction OR tea production OR tea board OR tea plantation OR tea brand OR tea imports',
-  Coffee: 'coffee industry OR coffee market OR coffee prices OR coffee export OR coffee production OR coffee brand OR coffee chain OR coffee imports OR cafe',
-  QSR:    'QSR OR quick service restaurant OR fast food OR food chain OR restaurant industry OR food delivery OR dine-in OR food court',
-  Meat:   'meat industry OR poultry industry OR livestock OR meat processing OR meat export OR meat prices OR chicken prices OR mutton OR seafood',
-  Dairy:  'dairy industry OR milk prices OR dairy market OR dairy export OR dairy production OR dairy brand OR milk production OR cheese OR butter OR paneer',
-  Spices: 'spices industry OR spice export OR spice market OR spice prices OR pepper OR cardamom OR turmeric OR cumin OR coriander OR spice board',
-  Alcohol: 'alcohol industry OR liquor market OR spirits OR beer OR wine OR distillery OR alcohol production OR alcohol export OR alcohol prices OR liquor sales OR breweries OR distilleries OR alcohol regulation OR alcohol consumption',
+  Tea:     'tea industry OR tea market OR tea prices OR tea export OR tea auction OR tea production OR tea board OR tea plantation OR tea brand OR tea imports OR "tea tender" OR "procurement of tea" OR "supply of tea" OR "RFP tea"',
+  Coffee:  'coffee industry OR coffee market OR coffee prices OR coffee export OR coffee production OR coffee brand OR coffee chain OR coffee imports OR cafe OR "coffee tender" OR "procurement of coffee" OR "supply of coffee" OR "RFP coffee"',
+  QSR:     'QSR OR quick service restaurant OR fast food OR food chain OR restaurant industry OR food delivery OR dine-in OR food court OR "catering tender" OR "food supply tender"',
+  Meat:    'meat industry OR poultry industry OR livestock OR meat processing OR meat export OR meat prices OR chicken prices OR mutton OR seafood OR "meat tender" OR "poultry procurement"',
+  Dairy:   'dairy industry OR milk prices OR dairy market OR dairy export OR dairy production OR dairy brand OR milk production OR cheese OR butter OR paneer OR "milk tender" OR "dairy procurement"',
+  Spices:  'spices industry OR spice export OR spice market OR spice prices OR pepper OR cardamom OR turmeric OR cumin OR coriander OR spice board OR "spice tender" OR "spices procurement"',
+  Alcohol: 'alcohol industry OR liquor market OR spirits OR beer OR wine OR distillery OR alcohol production OR alcohol export OR alcohol prices OR liquor sales OR breweries OR distilleries OR alcohol regulation OR alcohol consumption OR "liquor license tender" OR "excise auction"',
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -49,10 +48,10 @@ const TOPIC_KEYWORDS = {
 //
 // Body: { topic: string, fromDate: "YYYY-MM-DD", toDate: "YYYY-MM-DD" }
 //
-// 1. Calls NewsAPI to search for articles about the topic in India
-// 2. Sends the results to Claude to generate a 3-4 sentence summary
-//    for every article in a single API call (efficient)
-// 3. Returns the combined list to the frontend
+// 1. Calls NewsAPI and Google News RSS to search for articles and commercial tenders
+// 2. Sends the results to Claude to filter out completely irrelevant noise
+// 3. Generates concise summaries for the final valid selection
+// 4. Returns the combined list to the frontend
 // ─────────────────────────────────────────────────────────────
 router.post('/fetch', async (req, res) => {
   const { topic, fromDate, toDate } = req.body;
@@ -62,10 +61,6 @@ router.post('/fetch', async (req, res) => {
     return res.status(400).json({ error: 'topic, fromDate, and toDate are all required.' });
   }
 
-  // ── Step 1: Fetch from NewsAPI (two queries, merged) ─────
-  // Query A: topic must appear in the title + article must mention India
-  // Query B: topic in title, no country filter — catches global trade news affecting India
-  // Merging both gives 20-40 relevant articles before Claude filters.
   let rawArticles = [];
   try {
     const keywords = TOPIC_KEYWORDS[topic] || topic;
@@ -79,14 +74,16 @@ router.post('/fetch', async (req, res) => {
       apiKey: process.env.NEWS_API_KEY,
     };
 
-    // Google News RSS — free, no API key, covers 100s of Indian publications.
-    // Two queries: one India-focused, one industry-keyword focused.
+    // Google News RSS configuration
     const rssQuery1 = encodeURIComponent(`${topic} industry India`);
     const rssQuery2 = encodeURIComponent(`${topic} ${keywords}`);
-    const rssBase   = 'https://news.google.com/rss/search?hl=en-IN&gl=IN&ceid=IN:en&q=';
+    // Explicit transactional pipeline query targeting official procurement notices
+    const rssQueryTenders = encodeURIComponent(`"${topic}" AND (tender OR procurement OR bidding OR "supply notice" OR "e-marketplace") India`);
+    
+    const rssBase = 'https://news.google.com/rss/search?hl=en-IN&gl=IN&ceid=IN:en&q=';
 
-    // Run all four fetches in parallel
-    const [indiaRes, globalRes, rss1Res, rss2Res] = await Promise.allSettled([
+    // Run all five data-gathering pipelines in parallel
+    const [indiaRes, globalRes, rss1Res, rss2Res, rssTenderRes] = await Promise.allSettled([
       // NewsAPI: topic + India in title
       axios.get('https://newsapi.org/v2/everything', {
         params: { ...commonParams, q: `${topic} India`, pageSize: 30 },
@@ -99,6 +96,8 @@ router.post('/fetch', async (req, res) => {
       rssParser.parseURL(`${rssBase}${rssQuery1}`),
       // Google News RSS: industry keywords (global)
       rssParser.parseURL(`${rssBase}${rssQuery2}`),
+      // Google News RSS: Dedicated Procurement & Tender Capture Channel
+      rssParser.parseURL(`${rssBase}${rssQueryTenders}`),
     ]);
 
     // Normalise NewsAPI articles
@@ -121,7 +120,11 @@ router.post('/fetch', async (req, res) => {
       }));
     };
 
-    const rssArticles = [...toRssArticles(rss1Res), ...toRssArticles(rss2Res)];
+    const rssArticles = [
+      ...toRssArticles(rss1Res), 
+      ...toRssArticles(rss2Res),
+      ...toRssArticles(rssTenderRes) // Merging structural tender updates into processing queue
+    ];
 
     // Filter RSS articles to the requested date range
     const from = new Date(fromDate);
@@ -162,9 +165,6 @@ router.post('/fetch', async (req, res) => {
   }
 
   // ── Step 2: Ask Claude to filter out irrelevant articles ──
-  // Even with a tight NewsAPI query some off-topic results slip through.
-  // Claude reads every title+description and returns only the indices that
-  // are genuinely about the topic's industry.
   let validArticles = cleanArticles;
   try {
     const titlesBlock = cleanArticles
@@ -176,9 +176,11 @@ router.post('/fetch', async (req, res) => {
       max_tokens: 500,
       messages: [{
         role: 'user',
-        content: `You are filtering news articles for a professional ${topic} industry newsletter.
+        content: `You are filtering news and business intelligence for a professional ${topic} industry newsletter.
 
-Below is a numbered list of article titles and descriptions. Keep an article if it is about the ${topic} industry in any way — prices, companies, exports, imports, production, consumption, regulation, market trends, or major events. Only remove articles that have absolutely nothing to do with ${topic}.
+Below is a numbered list of item titles and descriptions. Keep an item if it is about the ${topic} industry in any way — prices, companies, exports, imports, production, consumption, regulation, market trends, or major events.
+
+CRITICAL REQUIREMENT: You MUST keep all formal procurement notices, invitations to bid, corporate supply tenders, request for proposals (RFPs), and Government e-Marketplace (GeM) notification updates regarding the ${topic} sector. These are high-priority commercial indicators.
 
 Return a JSON array of the numbers to KEEP, e.g. [1, 2, 3, 5]. When in doubt, keep the article. No other text.
 
@@ -194,7 +196,6 @@ ${titlesBlock}`,
       validArticles = cleanArticles.filter((_, i) => keepIndices.has(i + 1));
     }
   } catch (err) {
-    // If filtering fails, proceed with all clean articles
     console.error('Claude filtering error:', err.message);
   }
 
@@ -203,7 +204,6 @@ ${titlesBlock}`,
   }
 
   // ── Step 3: Generate AI summaries via Claude ──────────────
-  // Pack all articles into one prompt so we only make a single API call.
   const articlesBlock = validArticles
     .map(
       (a, i) =>
@@ -223,7 +223,9 @@ ${titlesBlock}`,
           role: 'user',
           content: `You are an editor for a professional Indian industry newsletter covering the ${topic} sector.
 
-For EACH of the articles below, write a concise 3-4 sentence summary in a neutral, professional tone suitable for business readers.
+For EACH of the items below (which may include general industry news or official procurement/tender alerts), write a concise 3-4 sentence summary in a neutral, professional tone suitable for business leaders. 
+
+If the item is a procurement notice or tender, make sure to capture the key execution requirements, the issuing entity (e.g., Tea Board, Military, Government), and scope of supply if visible.
 
 Return ONLY a JSON array — no extra text before or after. Format:
 [
@@ -237,14 +239,12 @@ ${articlesBlock}`,
       ],
     });
 
-    // Claude should return pure JSON; parse it robustly
     const raw = claudeResponse.content[0].text;
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       summaries = JSON.parse(jsonMatch[0]);
     }
   } catch (err) {
-    // If Claude fails, we fall back to the NewsAPI description below
     console.error('Claude summarisation error:', err.message);
   }
 
@@ -258,7 +258,6 @@ ${articlesBlock}`,
       publishedAt: article.publishedAt,
       url: article.url,
       urlToImage: article.urlToImage || null,
-      // Use Claude's summary; fall back to the raw NewsAPI description
       summary: summaryObj?.summary || article.description || 'No summary available.',
     };
   });
