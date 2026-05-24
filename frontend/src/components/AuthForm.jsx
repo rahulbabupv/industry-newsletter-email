@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function AuthForm() {
   const { signIn, signUp } = useAuth();
-  const [mode, setMode]       = useState('login');   // 'login' | 'register'
+  const [mode, setMode]       = useState('login');   // 'login' | 'register' | 'forgot'
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]     = useState('');
@@ -19,13 +20,24 @@ export default function AuthForm() {
     if (mode === 'login') {
       const { error } = await signIn(email, password);
       if (error) setError(error.message);
-    } else {
+    } else if (mode === 'register') {
       const { error } = await signUp(email, password);
       if (error) {
         setError(error.message);
       } else {
         setInfo('Account created! Check your email to confirm, then log in.');
         setMode('login');
+      }
+    } else if (mode === 'forgot') {
+      // Send password reset email
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        setInfo('Password reset email sent! Check your inbox for the link.');
+        setTimeout(() => setMode('login'), 3000);
       }
     }
     setLoading(false);
@@ -45,7 +57,9 @@ export default function AuthForm() {
           </div>
           <h1 className="text-xl font-bold text-gray-900">Industry Newsletter</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}
+            {mode === 'login' ? 'Sign in to your account'
+             : mode === 'register' ? 'Create a new account'
+             : 'Reset your password'}
           </p>
         </div>
 
@@ -62,18 +76,20 @@ export default function AuthForm() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-700"
-            />
-          </div>
+          {(mode === 'login' || mode === 'register') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-700"
+              />
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -91,19 +107,53 @@ export default function AuthForm() {
             disabled={loading}
             className="w-full py-2.5 bg-green-800 text-white font-medium rounded-lg hover:bg-green-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
           >
-            {loading ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
-                     : (mode === 'login' ? 'Sign In' : 'Create Account')}
+            {loading ? 'Please wait…'
+             : mode === 'login' ? 'Sign In'
+             : mode === 'register' ? 'Create Account'
+             : 'Send Reset Link'}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-gray-500">
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-          <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setInfo(''); }}
-            className="text-green-700 font-medium hover:underline"
-          >
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
-          </button>
+          {mode === 'login' && (
+            <>
+              Don't have an account?{' '}
+              <button
+                onClick={() => { setMode('register'); setError(''); setInfo(''); }}
+                className="text-green-700 font-medium hover:underline"
+              >
+                Sign up
+              </button>
+              <br />
+              <button
+                onClick={() => { setMode('forgot'); setError(''); setInfo(''); }}
+                className="text-green-700 font-medium hover:underline mt-2"
+              >
+                Forgot password?
+              </button>
+            </>
+          )}
+          {mode === 'register' && (
+            <>
+              Already have an account?{' '}
+              <button
+                onClick={() => { setMode('login'); setError(''); setInfo(''); }}
+                className="text-green-700 font-medium hover:underline"
+              >
+                Sign in
+              </button>
+            </>
+          )}
+          {mode === 'forgot' && (
+            <>
+              <button
+                onClick={() => { setMode('login'); setError(''); setInfo(''); }}
+                className="text-green-700 font-medium hover:underline"
+              >
+                Back to sign in
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>

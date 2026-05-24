@@ -5,6 +5,7 @@ import ArticleCard from './components/ArticleCard';
 import NewsletterDisplay from './components/NewsletterDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuthForm from './components/AuthForm';
+import ResetPasswordConfirm from './components/ResetPasswordConfirm';
 import { useAuth } from './context/AuthContext';
 
 const TOPICS = ['Tea', 'Coffee', 'QSR', 'Meat', 'Dairy', 'Spices','Alcohol'];
@@ -19,6 +20,21 @@ function getDefaultDates() {
 
 export default function App() {
   const { user, accessToken, loading: authLoading, signOut } = useAuth();
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  // Simple routing: check if we're on the reset password callback route
+  const isResetCallback = window.location.pathname === '/auth/callback';
+
+  if (isResetCallback && !resetSuccess) {
+    return (
+      <ResetPasswordConfirm
+        onResetSuccess={() => {
+          setResetSuccess(true);
+          setTimeout(() => window.location.href = '/', 1000);
+        }}
+      />
+    );
+  }
 
   // ── Form state ──────────────────────────────────────────────
   const defaults = getDefaultDates();

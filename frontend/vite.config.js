@@ -10,7 +10,7 @@ export default defineConfig({
     // so the frontend never has to know the backend URL.
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5002',
         changeOrigin: true,
       },
     },
