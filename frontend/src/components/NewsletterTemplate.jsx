@@ -15,7 +15,6 @@ const C = {
 const FONT_HEADLINE = "'Merriweather', Georgia, serif";
 const FONT_BODY = "'Inter', system-ui, -apple-system, sans-serif";
 
-// Deep Image Variety Database
 const TOPIC_IMAGERY_MATRIX = {
   Tea: [
     'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80',
@@ -42,7 +41,7 @@ const TOPIC_IMAGERY_MATRIX = {
     'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80'
   ],
   Dairy: [
-    'https://images.unsplash.com/photo-1554844391-7681467472c2?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1554844391-7681477472c2?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1528750951218-a10c17a26f63?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=800&q=80'
@@ -109,7 +108,11 @@ function ImageBlock({ url, height, topic, positionIndex = 0 }) {
 function HeroArticle({ article, topic }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
+    <div style={{ 
+      background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', marginBottom: '24px',
+      // PRINT STABILITY OVERRIDE: Prevents the card wrapper from splitting mid-way down a page fold
+      pageBreakInside: 'avoid', breakInside: 'avoid'
+    }}>
       <ImageBlock url={imageUrl} height={240} topic={topic} positionIndex={0} />
       <div style={{ padding: '24px 28px' }}>
         <div style={{ marginBottom: '12px' }}>
@@ -128,7 +131,11 @@ function HeroArticle({ article, topic }) {
 function SmallCard({ article, topic, positionIndex }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <div style={{ 
+      background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', 
+      display: 'flex', flexDirection: 'column', flex: 1, minWidth: '0', // FIX: Prevents flex layout from clipping boundaries
+      pageBreakInside: 'avoid', breakInside: 'avoid'
+    }}>
       <ImageBlock url={imageUrl} height={140} topic={topic} positionIndex={positionIndex} />
       <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: '10px' }}>
@@ -138,7 +145,7 @@ function SmallCard({ article, topic, positionIndex }) {
         <div style={{ fontFamily: FONT_BODY, fontSize: '10px', color: C.mutedText, marginBottom: '10px' }}>
           <span style={{ color: C.primary, fontWeight: 700 }}>{source}</span> <span style={{ margin: '0 5px' }}>·</span> {date}
         </div>
-        <div style={{ fontFamily: FONT_BODY, fontSize: '12.5px', lineHeight: '1.6', color: C.bodyText, flex: 1 }}>{body}</div>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '12.5px', lineHeight: '1.6', color: C.bodyText, flex: 1, wordBreak: 'break-word' }}>{body}</div>
       </div>
     </div>
   );
@@ -147,11 +154,14 @@ function SmallCard({ article, topic, positionIndex }) {
 function ListArticle({ article, index, topic }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '16px' }}>
+    <div style={{ 
+      background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '16px',
+      pageBreakInside: 'avoid', breakInside: 'avoid'
+    }}>
       <div style={{ width: '140px', flexShrink: 0, position: 'relative' }}>
         <ImageBlock url={imageUrl} height={120} topic={topic} positionIndex={index} />
       </div>
-      <div style={{ padding: '16px 20px', flex: 1 }}>
+      <div style={{ padding: '16px 20px', flex: 1, minWidth: '0' }}>
         <div style={{ marginBottom: '8px' }}>
           <span style={{ fontFamily: FONT_HEADLINE, fontSize: '15px', fontWeight: 700, color: C.textDark, lineHeight: 1.3 }}>{headline}</span>
           {tag && <Tag label={tag} />}
@@ -159,28 +169,29 @@ function ListArticle({ article, index, topic }) {
         <div style={{ fontFamily: FONT_BODY, fontSize: '10px', color: C.mutedText, marginBottom: '10px' }}>
           <span style={{ color: C.primary, fontWeight: 700 }}>{source}</span> <span style={{ margin: '0 5px' }}>·</span> {date}
         </div>
-        <div style={{ fontFamily: FONT_BODY, fontSize: '13px', lineHeight: '1.6', color: C.bodyText }}>{body}</div>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '13px', lineHeight: '1.6', color: C.bodyText, wordBreak: 'break-word' }}>{body}</div>
       </div>
     </div>
   );
 }
 
 export default function NewsletterTemplate({ data, topic }) {
+  const activeTopic = topic || data?.topic;
   const { newsletterTitle, tagline, edition, executiveSummary, articles, outlook } = data;
 
-  // SMART SAFETY NET: If props fail, look inside the text content to detect the topic
-  let activeTopic = topic || data?.topic;
-  if (!activeTopic && newsletterTitle) {
+  // Smart safety fallbacks to guess topic name if it's dropping across rendering routes
+  let resolvedTopic = activeTopic;
+  if (!resolvedTopic && newsletterTitle) {
     const textToScan = newsletterTitle.toLowerCase();
-    if (textToScan.includes('coffee')) activeTopic = 'Coffee';
-    else if (textToScan.includes('tea')) activeTopic = 'Tea';
-    else if (textToScan.includes('qsr') || textToScan.includes('burger') || textToScan.includes('restaurant')) activeTopic = 'QSR';
-    else if (textToScan.includes('meat') || textToScan.includes('poultry')) activeTopic = 'Meat';
-    else if (textToScan.includes('dairy') || textToScan.includes('milk')) activeTopic = 'Dairy';
-    else if (textToScan.includes('spice')) activeTopic = 'Spices';
-    else if (textToScan.includes('alcohol') || textToScan.includes('wine') || textToScan.includes('beer')) activeTopic = 'Alcohol';
+    if (textToScan.includes('coffee')) resolvedTopic = 'Coffee';
+    else if (textToScan.includes('tea')) resolvedTopic = 'Tea';
+    else if (textToScan.includes('qsr') || textToScan.includes('burger')) resolvedTopic = 'QSR';
+    else if (textToScan.includes('meat')) resolvedTopic = 'Meat';
+    else if (textToScan.includes('dairy')) resolvedTopic = 'Dairy';
+    else if (textToScan.includes('spice')) resolvedTopic = 'Spices';
+    else if (textToScan.includes('alcohol')) resolvedTopic = 'Alcohol';
   }
-  if (!activeTopic) activeTopic = 'Tea'; // Ground-level default fallback
+  if (!resolvedTopic) resolvedTopic = 'Tea';
 
   const hero = articles?.[0];
   const featured = articles?.slice(1, 3) ?? [];
@@ -188,25 +199,27 @@ export default function NewsletterTemplate({ data, topic }) {
 
   return (
     <div style={{ 
-      fontFamily: FONT_BODY, background: C.bgPaper, color: C.bodyText, maxWidth: '760px', margin: '0 auto',
+      fontFamily: FONT_BODY, background: C.bgPaper, color: C.bodyText, 
+      width: '740px',          // FIX: Explicit hard-locked page width for optimized A4 canvas aspect ratios
+      minHeight: '1040px',     // FIX: Matches standard A4 height to prevent compression clipping
+      margin: '0 auto',
       padding: '0',
-      // FIX: Removed the buggy 'pageBreakBefore' that was crashing html2canvas canvas captures!
+      boxSizing: 'border-box'
     }}>
-      {/* Stark, Authoritative Corporate Masthead */}
+      {/* Masthead Banner */}
       <div style={{ background: C.primary, color: C.white, padding: '54px 54px 44px', borderBottom: `3px solid #d4a85a` }}>
         <div style={{ fontFamily: FONT_HEADLINE, fontSize: '36px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.05 }}>{newsletterTitle}</div>
         <div style={{ fontFamily: FONT_BODY, fontSize: '13px', color: '#cbd5e1', marginTop: '10px' }}>{tagline}</div>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', margin: '24px 0 16px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>{edition}</div>
-          <div style={{ border: '1px solid rgba(255,255,255,0.4)', fontSize: '10px', padding: '3px 12px' }}>WEEKLY INTELLIGENCE BRIEF</div>
+          <div style={{ border: '1px solid rgba(255,255,255,0.4)', fontSize: '10px', padding: '3px 12px', fontFamily: FONT_BODY, fontWeight: 600 }}>WEEKLY INTELLIGENCE BRIEF</div>
         </div>
       </div>
 
-      {/* Main Document Frame */}
       <div style={{ padding: '40px 54px' }}>
         {/* Executive Summary Section */}
-        <div style={{ marginBottom: '36px' }}>
+        <div style={{ marginBottom: '36px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <SectionLabel>This Week in Brief</SectionLabel>
           <div style={{ background: C.summaryBg, borderLeft: `3px solid ${C.primary}`, padding: '20px 24px', fontFamily: FONT_HEADLINE, fontSize: '14px', lineHeight: '1.7', color: C.textDark }}>
             {executiveSummary}
@@ -216,29 +229,33 @@ export default function NewsletterTemplate({ data, topic }) {
         {/* News Coverage Layout Container */}
         <div style={{ marginBottom: '36px' }}>
           <SectionLabel>Key Stories</SectionLabel>
-          {hero && <HeroArticle article={hero} topic={activeTopic} />}
-          {/* Balanced Two-Column Flex Grid Layout */}
+          {hero && <HeroArticle article={hero} topic={resolvedTopic} />}
+          
+          {/* Two-Column Layout Grid Override */}
           {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'stretch', width: '100%' }}>
               {featured.map((article, i) => (
-                <SmallCard key={i} article={article} topic={activeTopic} positionIndex={i + 1} />
+                <SmallCard key={i} article={article} topic={resolvedTopic} positionIndex={i + 1} />
               ))}
             </div>
           )}
+          
           {rest.map((article, i) => (
-            <ListArticle key={i} article={article} index={i + 3} topic={activeTopic} />
+            <ListArticle key={i} article={article} index={i + 3} topic={resolvedTopic} />
           ))}
         </div>
 
         {/* Strategic Market Outlook Block */}
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '16px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <SectionLabel>Industry Outlook</SectionLabel>
-          <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, padding: '24px 28px', fontSize: '13.5px', lineHeight: '1.65' }}>{outlook}</div>
+          <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', padding: '24px 28px', fontSize: '13.5px', lineHeight: '1.65', fontFamily: FONT_BODY }}>
+            {outlook}
+          </div>
         </div>
       </div>
 
-      {/* Footer Branding Line */}
-      <div style={{ background: '#022c22', color: '#94a3b8', padding: '20px 54px', fontSize: '11px', display: 'flex', justifyContent: 'space-between' }}>
+      {/* Footer Line */}
+      <div style={{ background: '#022c22', color: '#94a3b8', padding: '20px 54px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', fontFamily: FONT_BODY, fontWeight: 500 }}>
         <span>{newsletterTitle}</span>
         <span>{edition} | CORPORATE INTELLIGENCE</span>
       </div>
