@@ -20,7 +20,6 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const clone = source.cloneNode(true);
       const wrapper = document.createElement("div");
       
-      // FIX: Changed background from #ffffff to #FDFBF7 to match your premium magazine paper theme
       Object.assign(wrapper.style, {
         position: "fixed",
         top: "0",
@@ -35,15 +34,16 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
 
       const canvas = await html2canvas(wrapper, {
         scale: 2,
-        useCORS: false,
-        allowTaint: true,
         logging: false,
-        backgroundColor: "#FDFBF7", // FIX: Match premium matte background on canvas render
+        backgroundColor: "#FDFBF7",
         scrollX: 0,
         scrollY: 0,
         windowWidth: source.offsetWidth + 48,
         height: wrapper.scrollHeight,
         windowHeight: wrapper.scrollHeight,
+        // ── CRITICAL SECURITY FIXES FOR DYNAMIC IMAGES ─────────────────
+        useCORS: true,     // Instructs the renderer to load secure cross-origin assets
+        allowTaint: false, // Prevents external asset cross-tainting from crashing the compile track
       });
 
       document.body.removeChild(wrapper);
@@ -105,10 +105,10 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         </button>
       </div>
 
-      {/* FIX: Set the dashboard panel background to our premium color wrapper */}
       <div className="bg-magazine-bg rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div ref={contentRef}>
-          <NewsletterTemplate data={data} />
+          {/* FIX: Formally passed topic parameters through down to the nested compiler */}
+          <NewsletterTemplate data={data} topic={topic} />
         </div>
       </div>
     </div>
