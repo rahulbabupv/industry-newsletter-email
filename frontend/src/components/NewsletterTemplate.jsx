@@ -15,15 +15,50 @@ const C = {
 const FONT_HEADLINE = "'Merriweather', Georgia, serif";
 const FONT_BODY = "'Inter', system-ui, -apple-system, sans-serif";
 
-// Topic-specific high-end imagery database
-const TOPIC_IMAGES = {
-  Tea:      'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80',
-  Coffee:   'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
-  QSR:      'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
-  Meat:     'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
-  Dairy:    'https://images.unsplash.com/photo-1554844391-7681467472c2?auto=format&fit=crop&w=800&q=80',
-  Spices:   'https://images.unsplash.com/photo-1596040033229-a9821b059514?auto=format&fit=crop&w=800&q=80',
-  Alcohol:  'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=80',
+// Deep Image Variety Database mapping indices to separate corporate Unsplash visuals
+const TOPIC_IMAGERY_MATRIX = {
+  Tea: [
+    'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80', // Estate
+    'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?auto=format&fit=crop&w=800&q=80', // Steaming cup
+    'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80', // Harvest
+    'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&w=800&q=80'  // Processing
+  ],
+  Coffee: [
+    'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80', // Beans roasting
+    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80', // Espresso Pour
+    'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80', // Cafe ritual
+    'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=800&q=80'  // Agronomy farm
+  ],
+  QSR: [
+    'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80', // Burger chain
+    'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?auto=format&fit=crop&w=800&q=80', // Kitchen counter
+    'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80', // Premium Dining
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80'  // Logistics pickup
+  ],
+  Meat: [
+    'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80'
+  ],
+  Dairy: [
+    'https://images.unsplash.com/photo-1554844391-7681467472c2?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1528750951218-a10c17a26f63?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=800&q=80'
+  ],
+  Spices: [
+    'https://images.unsplash.com/photo-1596040033229-a9821b059514?auto=format&fit=crop&w=800&q=80', // Wholesale market
+    'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80', // Indian condiments
+    'https://images.unsplash.com/photo-1509358271058-acd22cc93898?auto=format&fit=crop&w=800&q=80', // Spices sorting
+    'https://images.unsplash.com/photo-1532336414038-cf1905047b2b?auto=format&fit=crop&w=800&q=80'  // Traditional processing
+  ],
+  Alcohol: [
+    'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1528255671579-01b9e182ed1d?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=800&q=80'
+  ],
 };
 
 const TAG_COLORS = {
@@ -56,8 +91,12 @@ function SectionLabel({ children }) {
   );
 }
 
-function ImageBlock({ url, height, topic }) {
-  const fallbackImg = TOPIC_IMAGES[topic] || TOPIC_IMAGES.Tea;
+// Fixed ImageBlock logic: Uses a dynamic combination pool index value to map diverse visuals
+function ImageBlock({ url, height, topic, positionIndex = 0 }) {
+  const imagePool = TOPIC_IMAGERY_MATRIX[topic] || TOPIC_IMAGERY_MATRIX.Tea;
+  // Safely grab an offset variant index from our 4-image array pattern
+  const fallbackImg = imagePool[positionIndex % imagePool.length];
+  
   return (
     <div style={{ width: '100%', height: `${height}px`, overflow: 'hidden' }}>
       <img
@@ -73,7 +112,7 @@ function HeroArticle({ article, topic }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
     <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
-      <ImageBlock url={imageUrl} height={240} topic={topic} />
+      <ImageBlock url={imageUrl} height={240} topic={topic} positionIndex={0} />
       <div style={{ padding: '24px 28px' }}>
         <div style={{ marginBottom: '12px' }}>
           <span style={{ fontFamily: FONT_HEADLINE, fontSize: '24px', fontWeight: 700, color: C.textDark, lineHeight: 1.25, letterSpacing: '-0.01em' }}>{headline}</span>
@@ -88,11 +127,11 @@ function HeroArticle({ article, topic }) {
   );
 }
 
-function SmallCard({ article, topic }) {
+function SmallCard({ article, topic, positionIndex }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
     <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <ImageBlock url={imageUrl} height={140} topic={topic} />
+      <ImageBlock url={imageUrl} height={140} topic={topic} positionIndex={positionIndex} />
       <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: '10px' }}>
           <span style={{ fontFamily: FONT_HEADLINE, fontSize: '15px', fontWeight: 700, color: C.textDark, lineHeight: 1.3 }}>{headline}</span>
@@ -112,7 +151,7 @@ function ListArticle({ article, index, topic }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '16px' }}>
       <div style={{ width: '140px', flexShrink: 0, position: 'relative' }}>
-        <ImageBlock url={imageUrl} height={120} topic={topic} />
+        <ImageBlock url={imageUrl} height={120} topic={topic} positionIndex={index} />
       </div>
       <div style={{ padding: '16px 20px', flex: 1 }}>
         <div style={{ marginBottom: '8px' }}>
@@ -129,6 +168,8 @@ function ListArticle({ article, index, topic }) {
 }
 
 export default function NewsletterTemplate({ data, topic }) {
+  // Gracefully fallback to dynamic topic metrics if routing parameter variables display as empty string tokens
+  const activeTopic = topic || data?.topic || 'Tea';
   const { newsletterTitle, tagline, edition, executiveSummary, articles, outlook } = data;
   const hero = articles?.[0];
   const featured = articles?.slice(1, 3) ?? [];
@@ -143,41 +184,4 @@ export default function NewsletterTemplate({ data, topic }) {
         <div style={{ fontFamily: FONT_HEADLINE, fontSize: '36px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.05 }}>{newsletterTitle}</div>
         <div style={{ fontFamily: FONT_BODY, fontSize: '13px', color: '#cbd5e1', marginTop: '10px' }}>{tagline}</div>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', margin: '24px 0 16px' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>{edition}</div>
-          <div style={{ border: '1px solid rgba(255,255,255,0.4)', fontSize: '10px', padding: '3px 12px' }}>WEEKLY INTELLIGENCE BRIEF</div>
-        </div>
-      </div>
-
-      <div style={{ padding: '40px 54px' }}>
-        <div style={{ marginBottom: '36px' }}>
-          <SectionLabel>This Week in Brief</SectionLabel>
-          <div style={{ background: C.summaryBg, borderLeft: `3px solid ${C.primary}`, padding: '20px 24px', fontFamily: FONT_HEADLINE, fontSize: '14px', lineHeight: '1.7', color: C.textDark }}>
-            {executiveSummary}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '36px' }}>
-          <SectionLabel>Key Stories</SectionLabel>
-          {hero && <HeroArticle article={hero} topic={topic} />}
-          {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-              {featured.map((article, i) => <SmallCard key={i} article={article} topic={topic} />)}
-            </div>
-          )}
-          {rest.map((article, i) => <ListArticle key={i} article={article} index={i + 4} topic={topic} />)}
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <SectionLabel>Industry Outlook</SectionLabel>
-          <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, padding: '24px 28px', fontSize: '13.5px', lineHeight: '1.65' }}>{outlook}</div>
-        </div>
-      </div>
-
-      <div style={{ background: '#022c22', color: '#94a3b8', padding: '20px 54px', fontSize: '11px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>{newsletterTitle}</span>
-        <span>{edition} | CORPORATE INTELLIGENCE</span>
-      </div>
-    </div>
-  );
-}
+        <div style={{ display: 'flex', justifyContent: 'space-between
