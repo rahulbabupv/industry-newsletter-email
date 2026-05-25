@@ -15,7 +15,7 @@ const C = {
 const FONT_HEADLINE = "'Merriweather', Georgia, serif";
 const FONT_BODY = "'Inter', system-ui, -apple-system, sans-serif";
 
-// Deep Image Variety Database mapping indices to separate corporate Unsplash visuals
+// Deep Image Variety Database
 const TOPIC_IMAGERY_MATRIX = {
   Tea: [
     'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80',
@@ -80,7 +80,6 @@ function Tag({ label }) {
   );
 }
 
-// Section labels with thin grid horizontal lines
 function SectionLabel({ children }) {
   return (
     <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -167,8 +166,22 @@ function ListArticle({ article, index, topic }) {
 }
 
 export default function NewsletterTemplate({ data, topic }) {
-  const activeTopic = topic || data?.topic || 'Tea';
   const { newsletterTitle, tagline, edition, executiveSummary, articles, outlook } = data;
+
+  // SMART SAFETY NET: If props fail, look inside the text content to detect the topic
+  let activeTopic = topic || data?.topic;
+  if (!activeTopic && newsletterTitle) {
+    const textToScan = newsletterTitle.toLowerCase();
+    if (textToScan.includes('coffee')) activeTopic = 'Coffee';
+    else if (textToScan.includes('tea')) activeTopic = 'Tea';
+    else if (textToScan.includes('qsr') || textToScan.includes('burger') || textToScan.includes('restaurant')) activeTopic = 'QSR';
+    else if (textToScan.includes('meat') || textToScan.includes('poultry')) activeTopic = 'Meat';
+    else if (textToScan.includes('dairy') || textToScan.includes('milk')) activeTopic = 'Dairy';
+    else if (textToScan.includes('spice')) activeTopic = 'Spices';
+    else if (textToScan.includes('alcohol') || textToScan.includes('wine') || textToScan.includes('beer')) activeTopic = 'Alcohol';
+  }
+  if (!activeTopic) activeTopic = 'Tea'; // Ground-level default fallback
+
   const hero = articles?.[0];
   const featured = articles?.slice(1, 3) ?? [];
   const rest = articles?.slice(3) ?? [];
@@ -176,8 +189,10 @@ export default function NewsletterTemplate({ data, topic }) {
   return (
     <div style={{ 
       fontFamily: FONT_BODY, background: C.bgPaper, color: C.bodyText, maxWidth: '760px', margin: '0 auto',
-      pageBreakBefore: 'always', breakBefore: 'page'
+      padding: '0',
+      // FIX: Removed the buggy 'pageBreakBefore' that was crashing html2canvas canvas captures!
     }}>
+      {/* Stark, Authoritative Corporate Masthead */}
       <div style={{ background: C.primary, color: C.white, padding: '54px 54px 44px', borderBottom: `3px solid #d4a85a` }}>
         <div style={{ fontFamily: FONT_HEADLINE, fontSize: '36px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.05 }}>{newsletterTitle}</div>
         <div style={{ fontFamily: FONT_BODY, fontSize: '13px', color: '#cbd5e1', marginTop: '10px' }}>{tagline}</div>
@@ -188,7 +203,9 @@ export default function NewsletterTemplate({ data, topic }) {
         </div>
       </div>
 
+      {/* Main Document Frame */}
       <div style={{ padding: '40px 54px' }}>
+        {/* Executive Summary Section */}
         <div style={{ marginBottom: '36px' }}>
           <SectionLabel>This Week in Brief</SectionLabel>
           <div style={{ background: C.summaryBg, borderLeft: `3px solid ${C.primary}`, padding: '20px 24px', fontFamily: FONT_HEADLINE, fontSize: '14px', lineHeight: '1.7', color: C.textDark }}>
@@ -196,11 +213,13 @@ export default function NewsletterTemplate({ data, topic }) {
           </div>
         </div>
 
+        {/* News Coverage Layout Container */}
         <div style={{ marginBottom: '36px' }}>
           <SectionLabel>Key Stories</SectionLabel>
           {hero && <HeroArticle article={hero} topic={activeTopic} />}
+          {/* Balanced Two-Column Flex Grid Layout */}
           {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'stretch' }}>
               {featured.map((article, i) => (
                 <SmallCard key={i} article={article} topic={activeTopic} positionIndex={i + 1} />
               ))}
@@ -211,12 +230,14 @@ export default function NewsletterTemplate({ data, topic }) {
           ))}
         </div>
 
+        {/* Strategic Market Outlook Block */}
         <div style={{ marginBottom: '16px' }}>
           <SectionLabel>Industry Outlook</SectionLabel>
           <div style={{ background: C.white, border: `1px solid ${C.borderRule}`, padding: '24px 28px', fontSize: '13.5px', lineHeight: '1.65' }}>{outlook}</div>
         </div>
       </div>
 
+      {/* Footer Branding Line */}
       <div style={{ background: '#022c22', color: '#94a3b8', padding: '20px 54px', fontSize: '11px', display: 'flex', justifyContent: 'space-between' }}>
         <span>{newsletterTitle}</span>
         <span>{edition} | CORPORATE INTELLIGENCE</span>
