@@ -1,4 +1,7 @@
 import { useRef, useState } from "react";
+// STATIC IMPORTS: Pull libraries directly into the bundle payload to bypass dynamic SSL protocol errors!
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import NewsletterTemplate from "./NewsletterTemplate";
 
 export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate }) {
@@ -6,19 +9,28 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
   const contentRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
 
+  const waitForImages = (element) => {
+    const images = element.querySelectorAll("img");
+    const promises = Array.from(images).map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; 
+      });
+    });
+    return Promise.all(promises);
+  };
+
   const handleDownloadPDF = async () => {
     if (!contentRef.current) return;
     setDownloading(true);
 
-    try {
-      const { default: html2canvas } = await import("html2canvas");
-      const { default: jsPDF } = await import("jspdf");
+    let wrapper = null;
 
-      // Clone the element into a fixed off-screen container so html2canvas
-      // renders the FULL content height, not just the visible viewport.
+    try {
       const source = contentRef.current;
       const clone = source.cloneNode(true);
-      const wrapper = document.createElement("div");
+      wrapper = document.createElement("div");
       
       Object.assign(wrapper.style, {
         position: "fixed",
@@ -32,21 +44,28 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
 
+      // Wait for asset imagery sync
+      await waitForImages(wrapper);
+
       const canvas = await html2canvas(wrapper, {
-        scale: 2,
-        logging: false,
+        scale: 2,             
+        useCORS: true,        
+        allowTaint: false,    
+        logging: false,        
         backgroundColor: "#FDFBF7",
         scrollX: 0,
         scrollY: 0,
         windowWidth: source.offsetWidth + 48,
         height: wrapper.scrollHeight,
         windowHeight: wrapper.scrollHeight,
-        // ── CRITICAL SECURITY FIXES FOR DYNAMIC IMAGES ─────────────────
-        useCORS: true,     // Instructs the renderer to load secure cross-origin assets
-        allowTaint: false, // Prevents external asset cross-tainting from crashing the compile track
+        imageTimeout: 15000,  
+        removeContainer: true 
       });
 
-      document.body.removeChild(wrapper);
+      if (wrapper && wrapper.parentNode) {
+        document.body.removeChild(wrapper);
+        wrapper = null;
+      }
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
@@ -58,11 +77,9 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       let heightLeft = imgHeight;
       let yOffset = 0;
 
-      // First page
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      // Subsequent pages: shift the image up so the next slice shows
       while (heightLeft > 0) {
         yOffset -= pageHeight;
         pdf.addPage();
@@ -72,9 +89,12 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
 
       pdf.save(`${data?.newsletterTitle ?? topic ?? "newsletter"}-${fromDate}-${toDate}.pdf`);
     } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("PDF download failed. Please try again.");
+      console.error("CRITICAL EXPORT FAILURE DETECTED:", err);
+      alert(`PDF download failed. Technical Reason: ${err.message || "Canvas timeout"}.`);
     } finally {
+      if (wrapper && wrapper.parentNode) {
+        document.body.removeChild(wrapper);
+      }
       setDownloading(false);
     }
   };
@@ -107,7 +127,6 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
 
       <div className="bg-magazine-bg rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div ref={contentRef}>
-          {/* FIX: Formally passed topic parameters through down to the nested compiler */}
           <NewsletterTemplate data={data} topic={topic} />
         </div>
       </div>
