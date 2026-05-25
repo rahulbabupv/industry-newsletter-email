@@ -1,44 +1,46 @@
 import React from 'react';
 
+// Premium Editorial Color Palette (Matching Global Financial Briefs)
 const C = {
-  green:      '#1a3d2b',
-  greenDark:  '#122b1e',
-  greenLight: '#eef4f0',
-  gold:       '#d4a85a',
-  dark:       '#1a2a1c',
-  body:       '#2d3a2e',
-  muted:      '#5a6e5c',
-  rule:       '#c5d9c9',
-  bg:         '#faf9f6',
+  primary:    '#064e3b',  // Deep corporate emerald green
+  textDark:   '#111827',  // Crisp high-contrast charcoal black
+  bodyText:   '#232b24',  // Subdued charcoal for excellent paragraph reading
+  mutedText:  '#4b5563',  // Refined gray for dates and metadata
+  bgPaper:    '#FDFBF7',  // Premium off-white matte paper tint
+  borderRule: '#e5e7eb',  // Thin hairline dividers
+  summaryBg:  '#f4f1ea',  // Cream highlight color for executive briefs
   white:      '#FFFFFF',
 };
 
-const FONT = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
+// High-End Typography Pairings Linked in index.html
+const FONT_HEADLINE = "'Merriweather', Georgia, serif";
+const FONT_BODY = "'Inter', system-ui, -apple-system, sans-serif";
 
 const TAG_COLORS = {
-  Prices:        '#1a3d2b',
-  Export:        '#1d4f6e',
-  Production:    '#2d6a3f',
-  Policy:        '#4a3570',
-  Market:        '#7a5c1e',
-  Companies:     '#1d3d6e',
-  Import:        '#6e3a1d',
-  Sustainability:'#1a5c2e',
+  Prices:         '#064e3b',
+  Export:         '#1e40af',
+  Production:     '#0f766e',
+  Policy:         '#581c87',
+  Market:         '#854d0e',
+  Companies:      '#1e3a8a',
+  Import:         '#7c2d12',
+  Sustainability: '#14532d',
 };
 
 function Tag({ label }) {
-  const bg = TAG_COLORS[label] || C.gold;
+  const bg = TAG_COLORS[label] || C.primary;
   return (
     <span style={{
       display:       'inline-block',
       background:    bg,
       color:         C.white,
+      fontFamily:    FONT_BODY,
       fontSize:      '9px',
       fontWeight:    700,
-      letterSpacing: '0.08em',
+      letterSpacing: '0.06em',
       textTransform: 'uppercase',
-      padding:       '3px 8px',
-      borderRadius:  '3px',
+      padding:       '2px 6px',
+      borderRadius:  '2px',
       marginLeft:    '8px',
       verticalAlign: 'middle',
     }}>
@@ -49,23 +51,22 @@ function Tag({ label }) {
 
 function SectionLabel({ children }) {
   return (
-    <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <div style={{ width: '3px', height: '18px', background: C.gold, borderRadius: '2px', flexShrink: 0 }} />
+    <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
       <span style={{
-        fontSize:      '10px',
+        fontFamily:    FONT_BODY,
+        fontSize:      '11px',
         fontWeight:    800,
-        letterSpacing: '0.14em',
+        letterSpacing: '0.12em',
         textTransform: 'uppercase',
-        color:         C.green,
+        color:         C.primary,
       }}>
         {children}
       </span>
-      <div style={{ flex: 1, height: '1px', background: C.rule }} />
+      <div style={{ flex: 1, height: '1px', background: C.borderRule }} />
     </div>
   );
 }
 
-// Reusable image block — shows image or a styled placeholder
 function ImageBlock({ url, height }) {
   if (url) {
     return (
@@ -73,57 +74,68 @@ function ImageBlock({ url, height }) {
         <img
           src={url}
           alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       </div>
     );
   }
+  // Elegant Editorial Placeholder Box
   return (
     <div style={{
       width:          '100%',
       height:         `${height}px`,
-      background:     `linear-gradient(135deg, ${C.greenLight} 0%, ${C.rule} 100%)`,
+      background:     `linear-gradient(180deg, #f9f6f0 0%, ${C.summaryBg} 100%)`,
       display:        'flex',
       alignItems:     'center',
       justifyContent: 'center',
+      borderBottom:   `1px solid ${C.borderRule}`,
     }}>
-      <span style={{ color: C.muted, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+      <span style={{ 
+        fontFamily: FONT_BODY, 
+        color: C.mutedText, 
+        fontSize: '10px', 
+        fontWeight: 600, 
+        letterSpacing: '0.1em', 
+        textTransform: 'uppercase' 
+      }}>
         Industry News
       </span>
     </div>
   );
 }
 
-// ── Hero article — full width with large image ────────────────
+// Full width with clean typographical integration
 function HeroArticle({ article }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
     <div style={{
       background:   C.white,
-      border:       `1px solid ${C.rule}`,
-      borderRadius: '8px',
+      border:       `1px solid ${C.borderRule}`,
+      borderRadius: '4px',
       overflow:     'hidden',
-      marginBottom: '16px',
+      marginBottom: '24px',
     }}>
-      <ImageBlock url={imageUrl} height={260} />
-      <div style={{ padding: '22px 26px' }}>
-        <div style={{ marginBottom: '10px' }}>
+      <ImageBlock url={imageUrl} height={240} />
+      <div style={{ padding: '24px 28px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <span style={{
-            fontSize:   '21px',
-            fontWeight: 800,
-            color:      C.dark,
-            lineHeight: 1.3,
+            fontFamily:    FONT_HEADLINE,
+            fontSize:      '24px',
+            fontWeight:    700,
+            color:         C.textDark,
+            lineHeight:    1.25,
+            letterSpacing: '-0.01em',
           }}>
             {headline}
           </span>
           {tag && <Tag label={tag} />}
         </div>
-        <div style={{ fontSize: '11px', color: C.muted, marginBottom: '12px', letterSpacing: '0.02em' }}>
-          <span style={{ color: C.green, fontWeight: 600 }}>{source}</span>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '11px', color: C.mutedText, marginBottom: '14px' }}>
+          <span style={{ color: C.primary, fontWeight: 700 }}>{source}</span>
           <span style={{ margin: '0 6px' }}>·</span>
           {date}
         </div>
-        <div style={{ fontSize: '14px', lineHeight: 1.8, color: C.body }}>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '14px', lineHeight: '1.65', color: C.bodyText }}>
           {body}
         </div>
       </div>
@@ -131,31 +143,39 @@ function HeroArticle({ article }) {
   );
 }
 
-// ── Small card — two-column featured row ──────────────────────
+// Modular Grid Card
 function SmallCard({ article }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
     <div style={{
       background:   C.white,
-      border:       `1px solid ${C.rule}`,
-      borderRadius: '8px',
+      border:       `1px solid ${C.borderRule}`,
+      borderRadius: '4px',
       overflow:     'hidden',
+      display:      'flex',
+      flexDirection:'column',
       flex:         1,
     }}>
-      <ImageBlock url={imageUrl} height={150} />
-      <div style={{ padding: '14px 16px' }}>
-        <div style={{ marginBottom: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: C.dark, lineHeight: 1.35 }}>
+      <ImageBlock url={imageUrl} height={140} />
+      <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <span style={{ 
+            fontFamily: FONT_HEADLINE, 
+            fontSize: '15px', 
+            fontWeight: 700, 
+            color: C.textDark, 
+            lineHeight: 1.3 
+          }}>
             {headline}
           </span>
           {tag && <Tag label={tag} />}
         </div>
-        <div style={{ fontSize: '10px', color: C.muted, marginBottom: '8px' }}>
-          <span style={{ color: C.green, fontWeight: 600 }}>{source}</span>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '10px', color: C.mutedText, marginBottom: '10px' }}>
+          <span style={{ color: C.primary, fontWeight: 700 }}>{source}</span>
           <span style={{ margin: '0 5px' }}>·</span>
           {date}
         </div>
-        <div style={{ fontSize: '12.5px', lineHeight: 1.75, color: C.body }}>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '12.5px', lineHeight: '1.6', color: C.bodyText, flex: 1 }}>
           {body}
         </div>
       </div>
@@ -163,57 +183,56 @@ function SmallCard({ article }) {
   );
 }
 
-// ── List article — thumbnail on left ─────────────────────────
+// Multi-Column List Layout with Hairline Separators
 function ListArticle({ article, index }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
     <div style={{
       background:   C.white,
-      border:       `1px solid ${C.rule}`,
-      borderRadius: '8px',
+      border:       `1px solid ${C.borderRule}`,
+      borderRadius: '4px',
       overflow:     'hidden',
       display:      'flex',
-      marginBottom: '12px',
+      marginBottom: '16px',
     }}>
-      {/* Thumbnail */}
-      <div style={{ width: '130px', flexShrink: 0, position: 'relative' }}>
+      <div style={{ width: '140px', flexShrink: 0, position: 'relative' }}>
         {imageUrl ? (
           <img
             src={imageUrl}
             alt=""
-                        style={{ width: '130px', height: '100%', minHeight: '110px', objectFit: 'cover', display: 'block' }}
+            style={{ width: '140px', height: '100%', minHeight: '120px', objectFit: 'cover', display: 'block' }}
           />
         ) : (
           <div style={{
-            width:          '130px',
-            minHeight:      '110px',
+            width:          '140px',
+            minHeight:      '120px',
             height:         '100%',
-            background:     `linear-gradient(135deg, ${C.greenLight}, ${C.rule})`,
+            background:     `linear-gradient(180deg, #f9f6f0, ${C.summaryBg})`,
             display:        'flex',
             alignItems:     'center',
             justifyContent: 'center',
+            borderRight:    `1px solid ${C.borderRule}`,
           }}>
-            <span style={{ color: C.muted, fontSize: '24px', fontWeight: 900 }}>
+            <span style={{ fontFamily: FONT_HEADLINE, color: C.mutedText, fontSize: '20px', fontWeight: 700 }}>
               {String(index).padStart(2, '0')}
             </span>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '16px 18px', flex: 1 }}>
+      <div style={{ padding: '16px 20px', flex: 1 }}>
         <div style={{ marginBottom: '8px' }}>
-          <span style={{ fontSize: '13.5px', fontWeight: 700, color: C.dark, lineHeight: 1.35 }}>
+          <span style={{ fontFamily: FONT_HEADLINE, fontSize: '15px', fontWeight: 700, color: C.textDark, lineHeight: 1.3 }}>
             {headline}
           </span>
           {tag && <Tag label={tag} />}
         </div>
-        <div style={{ fontSize: '10px', color: C.muted, marginBottom: '8px' }}>
-          <span style={{ color: C.green, fontWeight: 600 }}>{source}</span>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '10px', color: C.mutedText, marginBottom: '10px' }}>
+          <span style={{ color: C.primary, fontWeight: 700 }}>{source}</span>
           <span style={{ margin: '0 5px' }}>·</span>
           {date}
         </div>
-        <div style={{ fontSize: '12.5px', lineHeight: 1.75, color: C.body }}>
+        <div style={{ fontFamily: FONT_BODY, fontSize: '13px', lineHeight: '1.6', color: C.bodyText }}>
           {body}
         </div>
       </div>
@@ -221,136 +240,148 @@ function ListArticle({ article, index }) {
   );
 }
 
-// ── Main template ─────────────────────────────────────────────
 export default function NewsletterTemplate({ data }) {
   const { newsletterTitle, tagline, edition, executiveSummary, articles, outlook } = data;
 
   const hero     = articles?.[0];
-  const featured = articles?.slice(1, 3) ?? [];   // two-column row
-  const rest     = articles?.slice(3)    ?? [];   // list
+  const featured = articles?.slice(1, 3) ?? [];
+  const rest     = articles?.slice(3)    ?? [];
 
   return (
-    <div style={{ fontFamily: FONT, background: C.bg, color: C.body, maxWidth: '720px', margin: '0 auto' }}>
+    <div style={{ 
+      fontFamily: FONT_BODY, 
+      background: C.bgPaper, 
+      color: C.bodyText, 
+      maxWidth: '760px', 
+      margin: '0 auto',
+      padding: '0'
+    }}>
 
-      {/* ── HEADER ──────────────────────────────────────────── */}
+      {/* Stark, Authoritative Corporate Masthead */}
       <div style={{
-        background: `linear-gradient(135deg, ${C.green} 0%, ${C.greenDark} 100%)`,
-        color:      C.white,
-        padding:    '44px 44px 36px',
-        position:   'relative',
-        overflow:   'hidden',
+        background:    C.primary,
+        color:         C.white,
+        padding:       '54px 54px 44px',
+        borderBottom:  `3px solid #d4a85a`, // Sophisticated gold structural line
       }}>
-        {/* Decorative circles */}
-        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-        <div style={{ position: 'absolute', bottom: '-70px', right: '100px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-
-        {/* Gold rule */}
-        <div style={{ width: '52px', height: '3px', background: C.gold, marginBottom: '22px', borderRadius: '2px' }} />
-
-        <div style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1 }}>
+        <div style={{ 
+          fontFamily:    FONT_HEADLINE, 
+          fontSize:      '36px', 
+          fontWeight:    700, 
+          letterSpacing: '-0.02em', 
+          lineHeight:    1.05 
+        }}>
           {newsletterTitle}
         </div>
-        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginTop: '8px', letterSpacing: '0.04em' }}>
+        <div style={{ 
+          fontFamily:    FONT_BODY, 
+          fontSize:      '13px', 
+          color:         '#cbd5e1', 
+          marginTop:     '10px', 
+          letterSpacing: '0.02em',
+          fontWeight:    400 
+        }}>
           {tagline}
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', margin: '22px 0 16px' }} />
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', margin: '24px 0 16px' }} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: FONT_BODY, fontSize: '11px', color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>
             {edition}
           </div>
           <div style={{
-            background:    C.gold,
-            color:         C.greenDark,
+            border:        '1px solid rgba(255,255,255,0.4)',
+            color:         C.white,
             fontSize:      '10px',
-            fontWeight:    800,
+            fontWeight:    600,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            padding:       '4px 14px',
-            borderRadius:  '20px',
+            padding:       '3px 12px',
+            borderRadius:  '2px',
           }}>
-            Industry Digest
+            Weekly Intelligence Brief
           </div>
         </div>
       </div>
 
-      {/* ── BODY ────────────────────────────────────────────── */}
-      <div style={{ padding: '36px 44px' }}>
+      {/* Main Document Frame */}
+      <div style={{ padding: '40px 54px' }}>
 
-        {/* Executive Summary */}
-        <div style={{ marginBottom: '32px' }}>
+        {/* Executive Summary Section */}
+        <div style={{ marginBottom: '36px' }}>
           <SectionLabel>This Week in Brief</SectionLabel>
           <div style={{
-            background:   C.greenLight,
-            borderLeft:   `4px solid ${C.green}`,
-            padding:      '18px 22px',
-            borderRadius: '0 8px 8px 0',
+            background:   C.summaryBg,
+            borderLeft:   `3px solid ${C.primary}`,
+            padding:      '20px 24px',
+            borderRadius: '2px',
+            fontFamily:   FONT_HEADLINE,
             fontSize:     '14px',
-            lineHeight:   1.8,
-            color:        C.dark,
-            fontStyle:    'italic',
+            lineHeight:   '1.7',
+            color:        C.textDark,
           }}>
             {executiveSummary}
           </div>
         </div>
 
-        {/* Key Stories */}
-        <div style={{ marginBottom: '32px' }}>
+        {/* News Coverage Layout Container */}
+        <div style={{ marginBottom: '36px' }}>
           <SectionLabel>Key Stories</SectionLabel>
 
-          {/* Hero article */}
           {hero && <HeroArticle article={hero} />}
 
-          {/* Two-column featured row */}
+          {/* Balanced Two-Column Flex Grid Layout */}
           {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'stretch' }}>
               {featured.map((article, i) => (
                 <SmallCard key={i} article={article} />
               ))}
             </div>
           )}
 
-          {/* Remaining articles as list */}
           {rest.map((article, i) => (
             <ListArticle key={i} article={article} index={i + 4} />
           ))}
         </div>
 
-        {/* Industry Outlook */}
-        <div style={{ marginBottom: '8px' }}>
+        {/* Strategic Market Outlook Block */}
+        <div style={{ marginBottom: '16px' }}>
           <SectionLabel>Industry Outlook</SectionLabel>
           <div style={{
-            background:   '#f2f5f2',
-            border:       `1px solid ${C.rule}`,
-            borderRadius: '8px',
-            padding:      '20px 24px',
-            fontSize:     '14px',
-            lineHeight:   1.8,
-            color:        C.dark,
+            background:   C.white,
+            border:       `1px solid ${C.borderRule}`,
+            borderRadius: '4px',
+            padding:      '24px 28px',
+            fontFamily:   FONT_BODY,
+            fontSize:     '13.5px',
+            lineHeight:   '1.65',
+            color:        C.bodyText,
           }}>
             {outlook}
           </div>
         </div>
       </div>
 
-      {/* ── FOOTER ──────────────────────────────────────────── */}
+      {/* Footer Branding Line */}
       <div style={{
-        background:     C.greenDark,
-        color:          'rgba(255,255,255,0.5)',
-        padding:        '18px 44px',
-        fontSize:       '11px',
-        display:        'flex',
+        background:    '#022c22',
+        color:         '#94a3b8',
+        padding:       '20px 54px',
+        fontSize:      '11px',
+        fontFamily:    FONT_BODY,
+        display:       'flex',
         justifyContent: 'space-between',
-        alignItems:     'center',
+        alignItems:    'center',
+        borderTop:     '1px solid rgba(255,255,255,0.05)'
       }}>
-        <span style={{ color: C.white, fontWeight: 700, letterSpacing: '0.05em' }}>
+        <span style={{ color: C.white, fontWeight: 600, letterSpacing: '0.02em' }}>
           {newsletterTitle}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span>{edition}</span>
-          <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: C.gold }} />
-          <span style={{ color: C.gold }}>Industry Intelligence</span>
+          <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d4a85a' }} />
+          <span style={{ color: '#d4a85a', fontWeight: 500 }}>Corporate Intelligence</span>
         </div>
       </div>
 

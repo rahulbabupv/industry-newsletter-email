@@ -19,12 +19,14 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const source = contentRef.current;
       const clone = source.cloneNode(true);
       const wrapper = document.createElement("div");
+      
+      // FIX: Changed background from #ffffff to #FDFBF7 to match your premium magazine paper theme
       Object.assign(wrapper.style, {
         position: "fixed",
         top: "0",
         left: "-9999px",
         width: source.offsetWidth + "px",
-        background: "#ffffff",
+        background: "#FDFBF7", 
         padding: "24px",
         boxSizing: "border-box",
       });
@@ -36,11 +38,10 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         useCORS: false,
         allowTaint: true,
         logging: false,
-        backgroundColor: "#ffffff",
+        backgroundColor: "#FDFBF7", // FIX: Match premium matte background on canvas render
         scrollX: 0,
         scrollY: 0,
         windowWidth: source.offsetWidth + 48,
-        // Tell html2canvas the full height so nothing is cropped
         height: wrapper.scrollHeight,
         windowHeight: wrapper.scrollHeight,
       });
@@ -55,7 +56,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       let heightLeft = imgHeight;
-      let yOffset = 0; // how far down the image we've already printed
+      let yOffset = 0;
 
       // First page
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
@@ -104,7 +105,8 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* FIX: Set the dashboard panel background to our premium color wrapper */}
+      <div className="bg-magazine-bg rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div ref={contentRef}>
           <NewsletterTemplate data={data} />
         </div>
