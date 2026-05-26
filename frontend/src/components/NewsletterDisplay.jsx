@@ -40,14 +40,14 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const source = contentRef.current;
       const clone = source.cloneNode(true);
       wrapper = document.createElement("div");
-      
+
       Object.assign(wrapper.style, {
         position: "fixed",
         top: "0",
         left: "-9999px",
         width: source.offsetWidth + "px",
-        background: "#FDFBF7", 
-        padding: "24px",
+        background: "#FDFBF7",
+        padding: "16px",
         boxSizing: "border-box",
       });
       wrapper.appendChild(clone);
@@ -57,14 +57,14 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       await waitForImages(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 1.5,
+        scale: 1.3,
         useCORS: true,
         allowTaint: false,
         logging: false,
         backgroundColor: "#FDFBF7",
         scrollX: 0,
         scrollY: 0,
-        windowWidth: source.offsetWidth + 48,
+        windowWidth: source.offsetWidth + 32,
         windowHeight: wrapper.scrollHeight,
         imageTimeout: 20000,
         removeContainer: true
