@@ -12,10 +12,19 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
   const waitForImages = (element) => {
     const images = element.querySelectorAll("img");
     const promises = Array.from(images).map((img) => {
-      if (img.complete) return Promise.resolve();
+      if (img.complete && img.naturalHeight > 0) {
+        return Promise.resolve();
+      }
       return new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = resolve; 
+        const timeout = setTimeout(resolve, 5000); // Fallback timeout per image
+        img.onload = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          resolve(); // Resolve even on error to not block
+        };
       });
     });
     return Promise.all(promises);
@@ -48,18 +57,17 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       await waitForImages(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 2,             
-        useCORS: true,        
-        allowTaint: false,    
-        logging: false,        
+        scale: 1.5,           // Reduced from 2 for cleaner page breaks
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
         backgroundColor: "#FDFBF7",
         scrollX: 0,
         scrollY: 0,
         windowWidth: source.offsetWidth + 48,
-        height: wrapper.scrollHeight,
         windowHeight: wrapper.scrollHeight,
-        imageTimeout: 15000,  
-        removeContainer: true 
+        imageTimeout: 20000,  // Increased from 15s to 20s for images
+        removeContainer: true
       });
 
       if (wrapper && wrapper.parentNode) {
@@ -75,16 +83,17 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       let heightLeft = imgHeight;
-      let yOffset = 0;
+      let position = 0;
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, pageHeight);
       heightLeft -= pageHeight;
+      position = -pageHeight;
 
       while (heightLeft > 0) {
-        yOffset -= pageHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, pageHeight);
         heightLeft -= pageHeight;
+        position -= pageHeight;
       }
 
       pdf.save(`${data?.newsletterTitle ?? topic ?? "newsletter"}-${fromDate}-${toDate}.pdf`);

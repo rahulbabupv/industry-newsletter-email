@@ -77,8 +77,8 @@ router.post('/fetch', async (req, res) => {
     // Google News RSS configuration
     const rssQuery1 = encodeURIComponent(`${topic} industry India`);
     const rssQuery2 = encodeURIComponent(`${topic} ${keywords}`);
-    // Explicit transactional pipeline query targeting official procurement notices
-    const rssQueryTenders = encodeURIComponent(`"${topic}" AND (tender OR procurement OR bidding OR "supply notice" OR "e-marketplace") India`);
+    // Explicit transactional pipeline query targeting official procurement notices and tender announcements
+    const rssQueryTenders = encodeURIComponent(`${topic} (tender OR tenders OR procurement OR bidding OR "supply notice" OR "e-marketplace" OR "GeM" OR "request for proposal" OR RFP OR "invitation to bid" OR ITB) India`);
     
     const rssBase = 'https://news.google.com/rss/search?hl=en-IN&gl=IN&ceid=IN:en&q=';
 

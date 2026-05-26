@@ -48,6 +48,8 @@ router.post('/generate', requireAuth, async (req, res) => {
 
 Generate newsletter content for the week of ${dateRange}. Return ONLY valid JSON — no markdown, no extra text.
 
+IMPORTANT: For EVERY article, choose ONE tag from this list: Prices, Export, Production, Policy, Market, Companies, Import, Sustainability. Pick the tag that best categorizes the article's focus. Never omit the tag field.
+
 Use this exact structure:
 {
   "newsletterTitle": "The ${topic} Insider",
@@ -60,7 +62,7 @@ Use this exact structure:
       "source": "Publication Name",
       "date": "DD Mon YYYY",
       "body": "3-4 sentence professional write-up synthesising the article's key points for a business audience.",
-      "tag": "one of: Prices | Export | Production | Policy | Market | Companies | Import | Sustainability"
+      "tag": "Prices"
     }
   ],
   "outlook": "2-3 sentence forward-looking industry perspective — trends, risks, or opportunities to watch next week."
