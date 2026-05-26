@@ -57,7 +57,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       await waitForImages(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: false,
         logging: false,
@@ -75,7 +75,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         wrapper = null;
       }
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -85,13 +85,13 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       let heightLeft = imgHeight;
       let yOffset = 0;
 
-      pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, imgHeight);
+      pdf.addImage(imgData, "JPEG", 0, yOffset, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
       while (heightLeft > 0) {
         yOffset -= pageHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, imgHeight);
+        pdf.addImage(imgData, "JPEG", 0, yOffset, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
