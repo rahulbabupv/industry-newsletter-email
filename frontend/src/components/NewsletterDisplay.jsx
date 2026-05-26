@@ -57,7 +57,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       await waitForImages(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 1.5,           // Reduced from 2 for cleaner page breaks
+        scale: 2,
         useCORS: true,
         allowTaint: false,
         logging: false,
@@ -66,7 +66,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         scrollY: 0,
         windowWidth: source.offsetWidth + 48,
         windowHeight: wrapper.scrollHeight,
-        imageTimeout: 20000,  // Increased from 15s to 20s for images
+        imageTimeout: 20000,
         removeContainer: true
       });
 
@@ -83,17 +83,16 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       let heightLeft = imgHeight;
-      let position = 0;
+      let yOffset = 0;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, pageHeight);
+      pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-      position = -pageHeight;
 
       while (heightLeft > 0) {
+        yOffset -= pageHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, pageHeight);
+        pdf.addImage(imgData, "PNG", 0, yOffset, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-        position -= pageHeight;
       }
 
       pdf.save(`${data?.newsletterTitle ?? topic ?? "newsletter"}-${fromDate}-${toDate}.pdf`);
