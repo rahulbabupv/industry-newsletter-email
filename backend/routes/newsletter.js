@@ -48,7 +48,12 @@ router.post('/generate', requireAuth, async (req, res) => {
 
 Generate newsletter content for the week of ${dateRange}. Return ONLY valid JSON — no markdown, no extra text.
 
-IMPORTANT: For EVERY article, choose ONE tag from this list: Prices, Export, Production, Policy, Market, Companies, Import, Sustainability. Pick the tag that best categorizes the article's focus. Never omit the tag field.
+IMPORTANT: For EVERY article, choose ONE tag from this list: Tender, Prices, Export, Production, Policy, Market, Companies, Import, Sustainability.
+
+TAG ASSIGNMENT RULES:
+- If article mentions: tender, auction, procurement, RFP, ITB, "notice inviting", bidding, GeM → use "Tender" tag
+- Otherwise pick the tag that best categorizes the article's focus
+- Never omit the tag field
 
 Use this exact structure:
 {

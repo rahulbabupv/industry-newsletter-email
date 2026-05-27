@@ -61,7 +61,7 @@ const TOPIC_IMAGERY_MATRIX = {
 };
 
 const TAG_COLORS = {
-  Prices:         '#064e3b', Export: '#1e40af', Production: '#0f766e',
+  Tender:         '#dc2626', Prices: '#064e3b', Export: '#1e40af', Production: '#0f766e',
   Policy:         '#581c87', Market: '#854d0e', Companies: '#1e3a8a',
   Import:         '#7c2d12', Sustainability: '#14532d',
 };
