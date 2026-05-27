@@ -67,7 +67,9 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         windowWidth: source.offsetWidth + 32,
         windowHeight: wrapper.scrollHeight,
         imageTimeout: 20000,
-        removeContainer: true
+        removeContainer: true,
+        windowYOffset: 0,
+        windowXOffset: 0
       });
 
       if (wrapper && wrapper.parentNode) {

@@ -233,7 +233,7 @@ export default function NewsletterTemplate({ data, topic }) {
           
           {/* Two-Column Layout Grid Override */}
           {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'stretch', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', marginTop: '28px', alignItems: 'stretch', width: '100%', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               {featured.map((article, i) => (
                 <SmallCard key={i} article={article} topic={resolvedTopic} positionIndex={i + 1} />
               ))}
