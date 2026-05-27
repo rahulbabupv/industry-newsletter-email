@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --prefix frontend run dev)",
+      "Bash(tee /tmp/frontend_test.log)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'node|vite' } | Select-Object ProcessName, Id, @{Name='Port';Expression={$_.ProcessName}})"
+    ]
+  }
+}
