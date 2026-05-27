@@ -108,12 +108,11 @@ function ImageBlock({ url, height, topic, positionIndex = 0 }) {
 function HeroArticle({ article, topic }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ 
+    <div style={{
       background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', marginBottom: '24px',
-      // PRINT STABILITY OVERRIDE: Prevents the card wrapper from splitting mid-way down a page fold
       pageBreakInside: 'avoid', breakInside: 'avoid'
     }}>
-      <ImageBlock url={imageUrl} height={240} topic={topic} positionIndex={0} />
+      <ImageBlock url={imageUrl} height={180} topic={topic} positionIndex={0} />
       <div style={{ padding: '24px 28px' }}>
         <div style={{ marginBottom: '12px' }}>
           <span style={{ fontFamily: FONT_HEADLINE, fontSize: '24px', fontWeight: 700, color: C.textDark, lineHeight: 1.25, letterSpacing: '-0.01em' }}>{headline}</span>
@@ -131,12 +130,12 @@ function HeroArticle({ article, topic }) {
 function SmallCard({ article, topic, positionIndex }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ 
-      background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', 
-      display: 'flex', flexDirection: 'column', flex: 1, minWidth: '0', // FIX: Prevents flex layout from clipping boundaries
+    <div style={{
+      background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', flex: 1, minWidth: '0',
       pageBreakInside: 'avoid', breakInside: 'avoid'
     }}>
-      <ImageBlock url={imageUrl} height={140} topic={topic} positionIndex={positionIndex} />
+      <ImageBlock url={imageUrl} height={110} topic={topic} positionIndex={positionIndex} />
       <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: '10px' }}>
           <span style={{ fontFamily: FONT_HEADLINE, fontSize: '15px', fontWeight: 700, color: C.textDark, lineHeight: 1.3 }}>{headline}</span>
@@ -154,12 +153,12 @@ function SmallCard({ article, topic, positionIndex }) {
 function ListArticle({ article, index, topic }) {
   const { headline, source, date, body, tag, imageUrl } = article;
   return (
-    <div style={{ 
+    <div style={{
       background: C.white, border: `1px solid ${C.borderRule}`, borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '16px',
       pageBreakInside: 'avoid', breakInside: 'avoid'
     }}>
-      <div style={{ width: '140px', flexShrink: 0, position: 'relative' }}>
-        <ImageBlock url={imageUrl} height={120} topic={topic} positionIndex={index} />
+      <div style={{ width: '120px', flexShrink: 0, position: 'relative' }}>
+        <ImageBlock url={imageUrl} height={100} topic={topic} positionIndex={index} />
       </div>
       <div style={{ padding: '16px 20px', flex: 1, minWidth: '0' }}>
         <div style={{ marginBottom: '8px' }}>
@@ -233,7 +232,7 @@ export default function NewsletterTemplate({ data, topic }) {
           
           {/* Two-Column Layout Grid Override */}
           {featured.length > 0 && (
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', marginTop: '28px', alignItems: 'stretch', width: '100%', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', marginTop: '32px', alignItems: 'stretch', width: '100%', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               {featured.map((article, i) => (
                 <SmallCard key={i} article={article} topic={resolvedTopic} positionIndex={i + 1} />
               ))}
