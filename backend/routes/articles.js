@@ -77,26 +77,26 @@ router.post('/fetch', async (req, res) => {
     // Google News RSS configuration
     const rssQuery1 = encodeURIComponent(`${topic} industry India`);
     const rssQuery2 = encodeURIComponent(`${topic} ${keywords}`);
-    // Explicit transactional pipeline query targeting official procurement notices and tender announcements
-    const rssQueryTenders = encodeURIComponent(`${topic} (tender OR tenders OR procurement OR bidding OR "supply notice" OR "e-marketplace" OR "GeM" OR "request for proposal" OR RFP OR "invitation to bid" OR ITB) India`);
-    
+    // Explicit tender query with broader keywords for government procurement
+    const rssQueryTenders = encodeURIComponent(`${topic} (tender OR tenders OR auction OR procurement OR bidding OR "supply notice" OR "e-marketplace" OR "GeM" OR "request for proposal" OR RFP OR "invitation to bid" OR ITB OR "notice inviting" OR "notice for tender") India`);
+
     const rssBase = 'https://news.google.com/rss/search?hl=en-IN&gl=IN&ceid=IN:en&q=';
 
-    // Run all five data-gathering pipelines in parallel
+    // Run all data-gathering pipelines in parallel
     const [indiaRes, globalRes, rss1Res, rss2Res, rssTenderRes] = await Promise.allSettled([
       // NewsAPI: topic + India in title
       axios.get('https://newsapi.org/v2/everything', {
         params: { ...commonParams, q: `${topic} India`, pageSize: 30 },
       }),
-      // NewsAPI: topic + industry keywords in title
+      // NewsAPI: Explicit tender/auction query
       axios.get('https://newsapi.org/v2/everything', {
-        params: { ...commonParams, q: `${topic} ${keywords}`, pageSize: 30 },
+        params: { ...commonParams, q: `${topic} (tender OR auction OR procurement OR "supply notice") India`, pageSize: 30 },
       }),
       // Google News RSS: industry + India
       rssParser.parseURL(`${rssBase}${rssQuery1}`),
       // Google News RSS: industry keywords (global)
       rssParser.parseURL(`${rssBase}${rssQuery2}`),
-      // Google News RSS: Dedicated Procurement & Tender Capture Channel
+      // Google News RSS: Dedicated Tender/Auction/Procurement Channel
       rssParser.parseURL(`${rssBase}${rssQueryTenders}`),
     ]);
 
@@ -180,9 +180,16 @@ router.post('/fetch', async (req, res) => {
 
 Below is a numbered list of item titles and descriptions. Keep an item if it is about the ${topic} industry in any way — prices, companies, exports, imports, production, consumption, regulation, market trends, or major events.
 
-CRITICAL REQUIREMENT: You MUST keep all formal procurement notices, invitations to bid, corporate supply tenders, request for proposals (RFPs), and Government e-Marketplace (GeM) notification updates regarding the ${topic} sector. These are high-priority commercial indicators.
+🔴 MANDATORY KEEP RULES - Do NOT filter these out:
+- Government tender notices, auctions, and procurement calls
+- Request for Proposals (RFPs) and Invitation to Bid (ITB)
+- Supply notices and e-marketplace (GeM) announcements
+- Any notice containing: tender, auction, procurement, bidding, RFP, ITB, "notice inviting"
+- Department/Ministry announcements for ${topic} sector
 
-Return a JSON array of the numbers to KEEP, e.g. [1, 2, 3, 5]. When in doubt, keep the article. No other text.
+These are critical commercial intelligence that MUST be included.
+
+Return ONLY a JSON array of the numbers to KEEP, e.g. [1, 2, 3, 5]. When in doubt, keep the article. No other text.
 
 Articles:
 ${titlesBlock}`,
@@ -223,11 +230,18 @@ ${titlesBlock}`,
           role: 'user',
           content: `You are an editor for a professional Indian industry newsletter covering the ${topic} sector.
 
-For EACH of the items below (which may include general industry news or official procurement/tender alerts), write a concise 3-4 sentence summary in a neutral, professional tone suitable for business leaders. 
+For EACH item below, write a concise 3-4 sentence summary in neutral, professional tone for business leaders.
 
-If the item is a procurement notice or tender, make sure to capture the key execution requirements, the issuing entity (e.g., Tea Board, Military, Government), and scope of supply if visible.
+SPECIAL HANDLING FOR TENDERS/AUCTIONS/PROCUREMENT:
+If the item is a tender, auction, RFP, GeM notice, or procurement call:
+- Lead with: "TENDER ALERT:" or "AUCTION:" or "PROCUREMENT NOTICE:"
+- Capture: Issuing authority, deadline, scope of work, expected value (if mentioned)
+- Example: "TENDER ALERT: [Authority] invites bids for [Commodity] supply. Deadline: [Date]. Scope: [Details]. Contact: [Info]"
 
-Return ONLY a JSON array — no extra text before or after. Format:
+For regular industry news:
+- Summarize: Key developments, impact on sector, relevant stakeholders
+
+Return ONLY a JSON array — no extra text. Format:
 [
   { "index": 1, "summary": "..." },
   { "index": 2, "summary": "..." }
