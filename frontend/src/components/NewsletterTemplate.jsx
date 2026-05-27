@@ -217,7 +217,7 @@ export default function NewsletterTemplate({ data, topic }) {
         </div>
       </div>
 
-      <div style={{ padding: '40px 54px' }}>
+      <div style={{ padding: '36px 48px' }}>
         {/* Executive Summary Section */}
         <div style={{ marginBottom: '36px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <SectionLabel>This Week in Brief</SectionLabel>

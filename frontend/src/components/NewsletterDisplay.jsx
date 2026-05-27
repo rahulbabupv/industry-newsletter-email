@@ -47,7 +47,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         left: "-9999px",
         width: source.offsetWidth + "px",
         background: "#FDFBF7",
-        padding: "16px",
+        padding: "12px",
         boxSizing: "border-box",
       });
       wrapper.appendChild(clone);
@@ -57,19 +57,20 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
       await waitForImages(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 1.3,
+        scale: 1.8,
         useCORS: true,
         allowTaint: false,
         logging: false,
         backgroundColor: "#FDFBF7",
         scrollX: 0,
         scrollY: 0,
-        windowWidth: source.offsetWidth + 32,
+        windowWidth: source.offsetWidth + 24,
         windowHeight: wrapper.scrollHeight,
         imageTimeout: 20000,
         removeContainer: true,
         windowYOffset: 0,
-        windowXOffset: 0
+        windowXOffset: 0,
+        letterRendering: true
       });
 
       if (wrapper && wrapper.parentNode) {
@@ -77,7 +78,7 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
         wrapper = null;
       }
 
-      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
