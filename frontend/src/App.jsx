@@ -3,6 +3,7 @@ import api from './lib/api';
 import Header from './components/Header';
 import ArticleCard from './components/ArticleCard';
 import NewsletterDisplay from './components/NewsletterDisplay';
+import NewsletterShare from './components/NewsletterShare';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuthForm from './components/AuthForm';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
@@ -22,8 +23,9 @@ export default function App() {
   const { user, accessToken, loading: authLoading, signOut } = useAuth();
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  // Simple routing: check if we're on the reset password callback route
+  // Simple routing: check if we're on special routes
   const isResetCallback = window.location.pathname === '/auth/callback';
+  const isNewsletterShare = window.location.pathname.match(/^\/newsletter\/[a-f0-9-]+$/);
 
   if (isResetCallback && !resetSuccess) {
     return (
@@ -34,6 +36,12 @@ export default function App() {
         }}
       />
     );
+  }
+
+  // Public newsletter share page (no auth required)
+  if (isNewsletterShare) {
+    const newsletterId = window.location.pathname.split('/')[2];
+    return <NewsletterShare id={newsletterId} />;
   }
 
   // ── Form state ──────────────────────────────────────────────
@@ -97,6 +105,12 @@ export default function App() {
     setTimeout(() => {
       document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 150);
+  }
+
+  function copyShareLink(id) {
+    const shareUrl = `${window.location.origin}/newsletter/${id}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert(`Share link copied! \n\n${shareUrl}`);
   }
 
   // ── Fetch Articles ──────────────────────────────────────────
@@ -389,6 +403,13 @@ export default function App() {
                             className="text-xs text-green-700 font-medium hover:underline"
                           >
                             View
+                          </button>
+                          <button
+                            onClick={() => copyShareLink(item.id)}
+                            className="text-xs text-blue-600 font-medium hover:underline"
+                            title="Copy shareable link"
+                          >
+                            Share
                           </button>
                           <button
                             onClick={() => deleteHistoryItem(item.id)}

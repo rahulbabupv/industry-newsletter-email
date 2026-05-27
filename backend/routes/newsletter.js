@@ -152,4 +152,19 @@ router.delete('/history/:id', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// GET /api/newsletter/view/:id — public endpoint to view newsletter (no auth required)
+router.get('/view/:id', async (req, res) => {
+  const { data, error } = await supabase
+    .from('newsletters')
+    .select('id, topic, from_date, to_date, created_at, data')
+    .eq('id', req.params.id)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ error: 'Newsletter not found.' });
+  }
+
+  res.json({ newsletter: data });
+});
+
 module.exports = router;
