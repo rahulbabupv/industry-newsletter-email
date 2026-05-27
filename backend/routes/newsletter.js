@@ -48,12 +48,14 @@ router.post('/generate', requireAuth, async (req, res) => {
 
 Generate newsletter content for the week of ${dateRange}. Return ONLY valid JSON — no markdown, no extra text.
 
-IMPORTANT: For EVERY article, choose ONE tag from this list: Tender, Prices, Export, Production, Policy, Market, Companies, Import, Sustainability.
+CRITICAL: For EVERY article, assign EXACTLY ONE tag. Available tags: Tender, Prices, Export, Production, Policy, Market, Companies, Import, Sustainability
 
-TAG ASSIGNMENT RULES:
-- If article mentions: tender, auction, procurement, RFP, ITB, "notice inviting", bidding, GeM → use "Tender" tag
-- Otherwise pick the tag that best categorizes the article's focus
-- Never omit the tag field
+🔴 PRIORITY TAG ASSIGNMENT:
+1. FIRST: If article is a tender, auction, RFP, procurement notice, or bidding opportunity → MUST tag as "Tender"
+2. SECOND: If article summary starts with "TENDER ALERT:" → MUST tag as "Tender"
+3. OTHERWISE: Pick the tag that best categorizes the article's focus
+
+Never omit the tag field. Every article must have exactly one tag.
 
 Use this exact structure:
 {
