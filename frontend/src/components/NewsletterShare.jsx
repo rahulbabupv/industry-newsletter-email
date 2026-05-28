@@ -10,7 +10,13 @@ export default function NewsletterShare({ id }) {
   useEffect(() => {
     const fetchNewsletter = async () => {
       try {
-        const response = await fetch(`http://localhost:5002/api/newsletter/view/${id}`);
+        // Determine backend URL
+        let backendUrl = 'https://industry-newsletter-backend.onrender.com';
+        if (import.meta.env.MODE === 'development' && window.location.hostname === 'localhost') {
+          backendUrl = 'http://localhost:5002';
+        }
+
+        const response = await fetch(`${backendUrl}/api/newsletter/view/${id}`);
         if (!response.ok) throw new Error("Newsletter not found");
         const result = await response.json();
         setNewsletter(result.newsletter);
