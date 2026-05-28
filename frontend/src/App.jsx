@@ -321,7 +321,7 @@ export default function App() {
         </section>
 
         {fetchingArticles && (
-          <LoadingSpinner message="Fetching articles and generating AI summaries… this may take 15–30 seconds." />
+          <LoadingSpinner message="Fetching articles and generating summaries… this may take 15–30 seconds." />
         )}
 
         {/* ── Article list ───────────────────────────────────── */}
