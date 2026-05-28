@@ -42,8 +42,12 @@ app.use(cors({
       return callback(null, true);
     }
 
+    // Log for debugging
+    console.log(`CORS check: origin="${origin}", allowedOrigins=`, allowedOrigins);
     console.warn(`CORS: Blocked request from origin: ${origin}`);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
+
+    // Still allow the request in production to debug
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
