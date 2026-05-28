@@ -209,11 +209,16 @@ export default function App() {
         { headers: authHeaders() }
       );
 
-      setNewsletter(data.newsletter);
-
-      setTimeout(() => {
-        document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
-      }, 150);
+      // Navigate to fresh newsletter view page if ID is available
+      if (data.id) {
+        window.location.href = `/newsletter/${data.id}`;
+      } else {
+        // Fallback: show inline if navigation fails
+        setNewsletter(data.newsletter);
+        setTimeout(() => {
+          document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      }
     } catch (err) {
       setGenError(err.response?.data?.error || 'Failed to generate newsletter. Please try again.');
     } finally {

@@ -95,18 +95,26 @@ ${articlesList}`,
       }));
     }
 
-    // Save to database (non-blocking — don't fail the request if this errors)
-    supabase.from('newsletters').insert({
-      user_id:   req.user.id,
-      topic,
-      from_date: fromDate,
-      to_date:   toDate,
-      data:      newsletterData,
-    }).then(({ error }) => {
-      if (error) console.error('Failed to save newsletter:', error.message);
-    });
+    // Save to database and get the ID for sharing
+    const { data: insertData, error: insertError } = await supabase
+      .from('newsletters')
+      .insert({
+        user_id:   req.user.id,
+        topic,
+        from_date: fromDate,
+        to_date:   toDate,
+        data:      newsletterData,
+      })
+      .select('id')
+      .single();
 
-    res.json({ newsletter: newsletterData });
+    if (insertError) {
+      console.error('Failed to save newsletter:', insertError.message);
+      // Still return the newsletter data even if save fails
+      return res.json({ newsletter: newsletterData });
+    }
+
+    res.json({ newsletter: newsletterData, id: insertData.id });
   } catch (err) {
     console.error('Newsletter generation error:', err.message);
 
