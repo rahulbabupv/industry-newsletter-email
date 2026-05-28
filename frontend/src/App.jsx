@@ -435,7 +435,10 @@ export default function App() {
                                     <div className="flex-1 min-w-0">
                                       <p className="text-xs font-semibold text-gray-800 truncate">{item.data.newsletterTitle}</p>
                                       <p className="text-xs text-gray-500 mt-0.5">
-                                        {new Date(item.from_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(item.to_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        Coverage: {new Date(item.from_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(item.to_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      </p>
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        Generated: {new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                                       </p>
                                     </div>
                                     <div className="flex gap-1.5 shrink-0">
