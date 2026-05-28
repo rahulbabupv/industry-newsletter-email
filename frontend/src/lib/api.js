@@ -1,9 +1,16 @@
 import axios from 'axios';
 
-// In development, VITE_API_URL is empty and Vite's proxy forwards /api → localhost:5000.
-// In production, VITE_API_URL is the Render backend URL (e.g. https://your-app.onrender.com).
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
-});
+// Determine API base URL based on environment
+let baseURL = '';
+
+if (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost') {
+  // Production: use Render backend
+  baseURL = 'https://industry-newsletter-backend.onrender.com';
+} else {
+  // Development: use Vite proxy (empty string = /api proxied to localhost:5002)
+  baseURL = '';
+}
+
+const api = axios.create({ baseURL });
 
 export default api;
