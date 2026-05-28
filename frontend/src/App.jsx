@@ -113,6 +113,31 @@ export default function App() {
     alert(`Share link copied! \n\n${shareUrl}`);
   }
 
+  // Group history by month, then by topic
+  function groupHistoryByMonthAndTopic(items) {
+    const grouped = {};
+
+    items.forEach((item) => {
+      const date = new Date(item.from_date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+      const topic = item.topic || 'Other';
+
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = { label: monthLabel, topics: {} };
+      }
+      if (!grouped[monthKey].topics[topic]) {
+        grouped[monthKey].topics[topic] = [];
+      }
+      grouped[monthKey].topics[topic].push(item);
+    });
+
+    // Sort months in descending order (newest first)
+    return Object.entries(grouped)
+      .sort(([keyA], [keyB]) => keyB.localeCompare(keyA))
+      .map(([_, value]) => value);
+  }
+
   // ── Fetch Articles ──────────────────────────────────────────
   async function handleFetchArticles() {
     if (!fromDate || !toDate) {
@@ -386,38 +411,55 @@ export default function App() {
               ) : history.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-10">No newsletters saved yet.</p>
               ) : (
-                <div className="space-y-3">
-                  {history.map((item) => (
-                    <div key={item.id} className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800">{item.data.newsletterTitle}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{item.data.edition}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => viewHistoricNewsletter(item)}
-                            className="text-xs text-green-700 font-medium hover:underline"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => copyShareLink(item.id)}
-                            className="text-xs text-blue-600 font-medium hover:underline"
-                            title="Copy shareable link"
-                          >
-                            Share
-                          </button>
-                          <button
-                            onClick={() => deleteHistoryItem(item.id)}
-                            className="text-xs text-red-500 hover:text-red-700"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                <div className="space-y-6">
+                  {groupHistoryByMonthAndTopic(history).map((monthGroup, monthIdx) => (
+                    <div key={monthIdx}>
+                      <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+                        📅 {monthGroup.label}
+                      </h3>
+                      <div className="space-y-4">
+                        {Object.entries(monthGroup.topics).map(([topic, items]) => (
+                          <div key={topic}>
+                            <h4 className="text-xs font-semibold text-gray-600 mb-2 pl-2 border-l-2 border-gray-300">
+                              {topic}
+                            </h4>
+                            <div className="space-y-2 ml-2">
+                              {items.map((item) => (
+                                <div key={item.id} className="bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-100 p-3 transition-colors">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold text-gray-800 truncate">{item.data.newsletterTitle}</p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {new Date(item.from_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(item.to_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-1.5 shrink-0">
+                                      <button
+                                        onClick={() => viewHistoricNewsletter(item)}
+                                        className="text-xs text-green-700 font-medium hover:underline whitespace-nowrap"
+                                      >
+                                        View
+                                      </button>
+                                      <button
+                                        onClick={() => copyShareLink(item.id)}
+                                        className="text-xs text-blue-600 font-medium hover:underline whitespace-nowrap"
+                                        title="Copy shareable link"
+                                      >
+                                        Share
+                                      </button>
+                                      <button
+                                        onClick={() => deleteHistoryItem(item.id)}
+                                        className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
