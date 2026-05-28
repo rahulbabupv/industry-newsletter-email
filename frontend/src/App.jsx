@@ -54,6 +54,7 @@ export default function App() {
   const [articles, setArticles] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [newsletter, setNewsletter] = useState('');
+  const [newsletterId, setNewsletterId] = useState('');
 
   // ── History state ───────────────────────────────────────────
   const [history, setHistory] = useState([]);
@@ -101,6 +102,7 @@ export default function App() {
 
   function viewHistoricNewsletter(item) {
     setNewsletter(item.data);
+    setNewsletterId(item.id);
     setHistoryOpen(false);
     setTimeout(() => {
       document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -209,11 +211,14 @@ export default function App() {
         { headers: authHeaders() }
       );
 
-      // Navigate to fresh newsletter view page if ID is available
+      // Show newsletter inline with ID for sharing features
       if (data.id) {
-        window.location.href = `/newsletter/${data.id}`;
+        setNewsletterId(data.id);
+        setNewsletter(data.newsletter);
+        setTimeout(() => {
+          document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
       } else {
-        // Fallback: show inline if navigation fails
         setNewsletter(data.newsletter);
         setTimeout(() => {
           document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -387,6 +392,8 @@ export default function App() {
               fromDate={fromDate}
               toDate={toDate}
               onOpenHistory={openHistory}
+              newsletterId={newsletterId}
+              accessToken={accessToken}
             />
           </div>
         )}

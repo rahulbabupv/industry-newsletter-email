@@ -3,11 +3,13 @@ import { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import NewsletterTemplate from "./NewsletterTemplate";
+import SendNewsletterEmail from "./SendNewsletterEmail";
 
-export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate, onOpenHistory }) {
+export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate, onOpenHistory, newsletterId, accessToken }) {
   const data = typeof newsletter === "string" ? JSON.parse(newsletter) : newsletter;
   const contentRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
 
   const waitForImages = (element) => {
     const images = element.querySelectorAll("img");
@@ -122,26 +124,35 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate,
       </div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Your Newsletter</h2>
-        <button
-          onClick={handleDownloadPDF}
-          disabled={downloading}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          {downloading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Generating PDF…
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Download PDF
-            </>
-          )}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSendModal(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            title="Send newsletter to recipients"
+          >
+            📬 Send
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={downloading}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            {downloading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Generating PDF…
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="bg-magazine-bg rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -149,6 +160,16 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate,
           <NewsletterTemplate data={data} topic={topic} />
         </div>
       </div>
+
+      {showSendModal && (
+        <SendNewsletterEmail
+          newsletter={data}
+          newsletterId={newsletterId}
+          accessToken={accessToken}
+          onClose={() => setShowSendModal(false)}
+          onSuccess={() => console.log("Newsletter sent successfully!")}
+        />
+      )}
     </div>
   );
 }

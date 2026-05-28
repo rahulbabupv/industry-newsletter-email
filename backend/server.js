@@ -1,6 +1,14 @@
 // Load environment variables from the .env file into process.env
 require('dotenv').config();
 
+// ⚠️ DEVELOPMENT ONLY: Disable SSL verification for local testing
+// This allows the backend to make API calls when behind a corporate firewall or proxy
+// Remove this in production!
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.warn('[WARNING] SSL certificate verification disabled for development');
+}
+
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');

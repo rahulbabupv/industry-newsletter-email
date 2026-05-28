@@ -1,5 +1,6 @@
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
+const { Resend } = require('resend');
 const { requireAuth, supabase } = require('../middleware/auth');
 
 const router = express.Router();
@@ -173,6 +174,94 @@ router.get('/view/:id', async (req, res) => {
   }
 
   res.json({ newsletter: data });
+});
+
+// POST /api/newsletter/send — send newsletter to recipients
+router.post('/send', requireAuth, async (req, res) => {
+  const { newsletterId, recipientEmails } = req.body;
+
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'Email service not configured. Please set RESEND_API_KEY in backend/.env' });
+  }
+
+  if (!newsletterId || !recipientEmails || !Array.isArray(recipientEmails)) {
+    return res.status(400).json({ error: 'Invalid request. Provide newsletterId and recipientEmails array.' });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validatedEmails = recipientEmails.map(email => ({
+    email: email.trim(),
+    valid: emailRegex.test(email.trim())
+  }));
+
+  const validEmails = validatedEmails.filter(e => e.valid).map(e => e.email);
+  if (validEmails.length === 0) {
+    return res.status(400).json({ error: 'No valid email addresses provided.' });
+  }
+
+  const { data: newsletter, error: fetchError } = await supabase
+    .from('newsletters')
+    .select('id, topic, data')
+    .eq('id', newsletterId)
+    .eq('user_id', req.user.id)
+    .single();
+
+  if (fetchError || !newsletter) {
+    return res.status(404).json({ error: 'Newsletter not found.' });
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const frontendUrl = process.env.FRONTEND_URL || 'https://industry-newsletter.vercel.app';
+  const shareLink = `${frontendUrl}/newsletter/${newsletterId}`;
+  const newsletterTitle = newsletter.data?.newsletterTitle || newsletter.topic || 'Newsletter';
+
+  const results = [];
+
+  for (const email of validEmails) {
+    try {
+      await resend.emails.send({
+        from: 'Newsletter <noreply@resend.dev>',
+        to: email,
+        subject: `Check out: ${newsletterTitle}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1f2937; margin-bottom: 16px;">${newsletterTitle}</h2>
+            <p style="color: #6b7280; margin-bottom: 24px;">A curated newsletter on ${newsletter.topic} has been shared with you.</p>
+            <a href="${shareLink}" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-bottom: 24px;">View Newsletter</a>
+            <p style="color: #6b7280; font-size: 14px;">Or copy this link: <a href="${shareLink}" style="color: #0891b2;">${shareLink}</a></p>
+          </div>
+        `
+      });
+
+      try {
+        await supabase
+          .from('email_sends')
+          .insert({
+            newsletter_id: newsletterId,
+            user_id: req.user.id,
+            recipient_email: email,
+            status: 'sent'
+          });
+      } catch (dbErr) {
+        console.warn(`Could not log email send to database: ${dbErr.message}`);
+      }
+
+      results.push({ email, status: 'sent' });
+    } catch (error) {
+      console.error(`Failed to send email to ${email}:`, error);
+      results.push({ email, status: 'failed', error: error.message });
+    }
+  }
+
+  const successCount = results.filter(r => r.status === 'sent').length;
+  const failureCount = results.filter(r => r.status === 'failed').length;
+
+  res.json({
+    success: successCount > 0,
+    sent: successCount,
+    failed: failureCount,
+    results
+  });
 });
 
 module.exports = router;

@@ -105,6 +105,9 @@ router.post('/fetch', async (req, res) => {
       ...(indiaRes.status  === 'fulfilled' ? indiaRes.value.data.articles  || [] : []),
       ...(globalRes.status === 'fulfilled' ? globalRes.value.data.articles || [] : []),
     ];
+    console.log(`[DEBUG] NewsAPI returned ${newsApiArticles.length} articles for topic: ${topic}`);
+    if (indiaRes.status !== 'fulfilled') console.log(`[DEBUG] NewsAPI India query failed: ${indiaRes.reason?.message}`);
+    if (globalRes.status !== 'fulfilled') console.log(`[DEBUG] NewsAPI tender query failed: ${globalRes.reason?.message}`);
 
     // Normalise RSS items into the same shape as NewsAPI articles
     const toRssArticles = (result) => {
@@ -121,10 +124,11 @@ router.post('/fetch', async (req, res) => {
     };
 
     const rssArticles = [
-      ...toRssArticles(rss1Res), 
+      ...toRssArticles(rss1Res),
       ...toRssArticles(rss2Res),
       ...toRssArticles(rssTenderRes) // Merging structural tender updates into processing queue
     ];
+    console.log(`[DEBUG] RSS feeds returned ${rssArticles.length} articles total`);
 
     // Filter RSS articles to the requested date range
     const from = new Date(fromDate);
@@ -134,6 +138,7 @@ router.post('/fetch', async (req, res) => {
       const d = new Date(a.publishedAt);
       return d >= from && d <= to;
     });
+    console.log(`[DEBUG] RSS articles after date filtering: ${rssFiltered.length}`);
 
     // Merge all sources and deduplicate by URL
     const seen = new Set();
@@ -143,6 +148,7 @@ router.post('/fetch', async (req, res) => {
         rawArticles.push(article);
       }
     }
+    console.log(`[DEBUG] Total articles after deduplication: ${rawArticles.length}`);
   } catch (err) {
     const status = err.response?.status;
     if (status === 401) {
@@ -159,8 +165,10 @@ router.post('/fetch', async (req, res) => {
   const cleanArticles = rawArticles.filter(
     (a) => a.title && a.title !== '[Removed]' && a.description
   );
+  console.log(`[DEBUG] Articles after cleaning (removing [Removed] etc): ${cleanArticles.length}`);
 
   if (cleanArticles.length === 0) {
+    console.log(`[DEBUG] No clean articles, returning empty results`);
     return res.json({ articles: [] });
   }
 
@@ -197,10 +205,14 @@ ${titlesBlock}`,
     });
 
     const raw = filterResponse.content[0].text;
+    console.log(`[DEBUG] Claude filter response: ${raw}`);
     const match = raw.match(/\[[\s\S]*?\]/);
     if (match) {
       const keepIndices = new Set(JSON.parse(match[0]));
       validArticles = cleanArticles.filter((_, i) => keepIndices.has(i + 1));
+      console.log(`[DEBUG] Claude kept ${validArticles.length} articles out of ${cleanArticles.length}`);
+    } else {
+      console.log(`[DEBUG] Claude response didn't contain valid JSON array`);
     }
   } catch (err) {
     console.error('Claude filtering error:', err.message);
