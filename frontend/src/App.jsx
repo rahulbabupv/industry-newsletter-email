@@ -386,6 +386,7 @@ export default function App() {
               topic={selectedTopic}
               fromDate={fromDate}
               toDate={toDate}
+              onOpenHistory={openHistory}
             />
           </div>
         )}

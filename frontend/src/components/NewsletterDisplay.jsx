@@ -4,7 +4,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import NewsletterTemplate from "./NewsletterTemplate";
 
-export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate }) {
+export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate, onOpenHistory }) {
   const data = typeof newsletter === "string" ? JSON.parse(newsletter) : newsletter;
   const contentRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
@@ -112,6 +112,14 @@ export default function NewsletterDisplay({ newsletter, topic, fromDate, toDate 
 
   return (
     <div className="mt-8">
+      <div className="mb-3 text-sm">
+        <button
+          onClick={onOpenHistory}
+          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+        >
+          ← View History
+        </button>
+      </div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Your Newsletter</h2>
         <button
