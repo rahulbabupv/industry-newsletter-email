@@ -223,7 +223,7 @@ router.post('/send', requireAuth, async (req, res) => {
     try {
       console.log(`[EMAIL] Sending to: ${email}`);
       const resendResponse = await resend.emails.send({
-        from: 'Newsletter <noreply@resend.dev>',
+        from: 'Newsletter <rahulbabupv@gmail.com>',
         to: email,
         subject: `Check out: ${newsletterTitle}`,
         html: `
