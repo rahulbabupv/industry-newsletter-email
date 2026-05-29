@@ -223,7 +223,7 @@ router.post('/send', requireAuth, async (req, res) => {
     try {
       console.log(`[EMAIL] Sending to: ${email}`);
       const resendResponse = await resend.emails.send({
-        from: 'Newsletter <rahulbabupv@gmail.com>',
+        from: 'Newsletter <onboarding@resend.dev>',
         to: email,
         subject: `Check out: ${newsletterTitle}`,
         html: `
@@ -235,7 +235,7 @@ router.post('/send', requireAuth, async (req, res) => {
           </div>
         `
       });
-      console.log(`[EMAIL] ✅ Success to ${email}:`, resendResponse);
+      console.log(`[EMAIL] ✅ Success to ${email}:`, JSON.stringify(resendResponse, null, 2));
 
       try {
         await supabase
@@ -252,7 +252,9 @@ router.post('/send', requireAuth, async (req, res) => {
 
       results.push({ email, status: 'sent' });
     } catch (error) {
-      console.error(`[EMAIL] ❌ Failed to send email to ${email}:`, error.message);
+      console.error(`[EMAIL] ❌ Failed to send email to ${email}`);
+      console.error(`[EMAIL] Error message:`, error.message);
+      console.error(`[EMAIL] Full error:`, JSON.stringify(error, null, 2));
       results.push({ email, status: 'failed', error: error.message });
     }
   }
