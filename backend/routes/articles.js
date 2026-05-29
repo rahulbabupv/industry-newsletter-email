@@ -227,7 +227,7 @@ ${titlesBlock}`,
     .map(
       (a, i) =>
         `Article ${i + 1}:\nTitle: ${a.title}\nDescription: ${a.description}\nContent: ${
-          a.content ? a.content.substring(0, 400) : 'N/A'
+          a.content ? a.content.substring(0, 1000) : 'N/A'
         }`
     )
     .join('\n\n---\n\n');
@@ -242,21 +242,24 @@ ${titlesBlock}`,
           role: 'user',
           content: `You are an editor for a professional Indian industry newsletter covering the ${topic} sector.
 
-For EACH item below, write a concise 3-4 sentence summary in neutral, professional tone for business leaders.
+For EACH article below, write a brief 3-line summary based on the title, description, and content.
+If content is limited, infer reasonable context from the title and description.
 
 SPECIAL HANDLING FOR TENDERS/AUCTIONS/PROCUREMENT:
 If the item is a tender, auction, RFP, GeM notice, or procurement call:
-- Lead with: "TENDER ALERT:" or "AUCTION:" or "PROCUREMENT NOTICE:"
-- Capture: Issuing authority, deadline, scope of work, expected value (if mentioned)
-- Example: "TENDER ALERT: [Authority] invites bids for [Commodity] supply. Deadline: [Date]. Scope: [Details]. Contact: [Info]"
+- Line 1: "TENDER ALERT: [Authority] invites bids for [Commodity]"
+- Line 2: "Deadline: [Date] | Scope: [Brief description]"
+- Line 3: "Expected value/Contact: [Details]"
 
 For regular industry news:
-- Summarize: Key developments, impact on sector, relevant stakeholders
+- Line 1: Key development or headline
+- Line 2: Impact and stakeholders affected
+- Line 3: Next steps or implications for the sector
 
-Return ONLY a JSON array — no extra text. Format:
+Keep each line concise (max 15-20 words per line). Return ONLY a JSON array:
 [
-  { "index": 1, "summary": "..." },
-  { "index": 2, "summary": "..." }
+  { "index": 1, "summary": "Line 1\\nLine 2\\nLine 3" },
+  { "index": 2, "summary": "Line 1\\nLine 2\\nLine 3" }
 ]
 
 Articles:
