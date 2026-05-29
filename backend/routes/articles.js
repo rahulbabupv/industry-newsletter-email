@@ -66,7 +66,7 @@ router.post('/fetch', async (req, res) => {
     const keywords = TOPIC_KEYWORDS[topic] || topic;
 
     const commonParams = {
-      searchIn: 'title',   // topic MUST be in the headline — best relevance signal
+      searchIn: 'title,description',
       from: fromDate,
       to: toDate,
       language: 'en',
@@ -86,11 +86,11 @@ router.post('/fetch', async (req, res) => {
     const [indiaRes, globalRes, rss1Res, rss2Res, rssTenderRes] = await Promise.allSettled([
       // NewsAPI: topic + India in title
       axios.get('https://newsapi.org/v2/everything', {
-        params: { ...commonParams, q: `${topic} India`, pageSize: 30 },
+        params: { ...commonParams, q: `${topic} India -recipe -health -"tea party" -wellness`, pageSize: 30 },
       }),
       // NewsAPI: Explicit tender/auction query
       axios.get('https://newsapi.org/v2/everything', {
-        params: { ...commonParams, q: `${topic} (tender OR auction OR procurement OR "supply notice") India`, pageSize: 30 },
+        params: { ...commonParams, q: `${topic} (tender OR auction OR procurement OR "supply notice") India -recipe -health`, pageSize: 30 },
       }),
       // Google News RSS: industry + India
       rssParser.parseURL(`${rssBase}${rssQuery1}`),
@@ -140,11 +140,12 @@ router.post('/fetch', async (req, res) => {
     });
     console.log(`[DEBUG] RSS articles after date filtering: ${rssFiltered.length}`);
 
-    // Merge all sources and deduplicate by URL
+    // Merge all sources and deduplicate by title + source
     const seen = new Set();
     for (const article of [...newsApiArticles, ...rssFiltered]) {
-      if (article.url && !seen.has(article.url)) {
-        seen.add(article.url);
+      const key = `${article.title}|${article.source?.name || 'unknown'}`;
+      if (!seen.has(key)) {
+        seen.add(key);
         rawArticles.push(article);
       }
     }
@@ -192,10 +193,11 @@ Below is a numbered list of item titles and descriptions. Keep an item if it is 
 - Government tender notices, auctions, and procurement calls
 - Request for Proposals (RFPs) and Invitation to Bid (ITB)
 - Supply notices and e-marketplace (GeM) announcements
+- IMPORTANT: For tenders, ONLY keep if the title or description mentions: deadline, bid, quote, application, closing, submission, or tender number
 - Any notice containing: tender, auction, procurement, bidding, RFP, ITB, "notice inviting"
 - Department/Ministry announcements for ${topic} sector
 
-These are critical commercial intelligence that MUST be included.
+Filter out fake tenders that don't have actual bidding details.
 
 Return ONLY a JSON array of the numbers to KEEP, e.g. [1, 2, 3, 5]. When in doubt, keep the article. No other text.
 
@@ -252,9 +254,9 @@ If the item is a tender, auction, RFP, GeM notice, or procurement call:
 - Line 3: "Expected value/Contact: [Details]"
 
 For regular industry news:
-- Line 1: Key development or headline
-- Line 2: Impact and stakeholders affected
-- Line 3: Next steps or implications for the sector
+- Line 1: Key development or headline (credible source context if notable)
+- Line 2: Financial impact or market consequence
+- Line 3: Actionable next steps or implications for the sector
 
 Keep each line concise (max 15-20 words per line). Return ONLY a JSON array:
 [
