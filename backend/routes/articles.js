@@ -8,6 +8,36 @@ const rssParser = new RssParser({ timeout: 10000 });
 
 const anthropic = new Anthropic();
 
+// Helper: Validate image URL is accessible and good quality
+async function validateImageUrl(url) {
+  if (!url) return null;
+  try {
+    const response = await axios.head(url, { timeout: 3000 });
+    const contentType = response.headers['content-type'];
+    const contentLength = parseInt(response.headers['content-length'] || 0);
+
+    // Check: is it an image, and is it reasonably sized (>20KB, <50MB)
+    if (contentType && contentType.startsWith('image/') && contentLength > 20000 && contentLength < 52428800) {
+      return url;
+    }
+  } catch (err) {
+    return null;
+  }
+  return null;
+}
+
+// Helper: Extract image URLs from article content/HTML
+function extractImagesFromContent(content) {
+  if (!content) return [];
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/g;
+  const images = [];
+  let match;
+  while ((match = imgRegex.exec(content)) !== null) {
+    images.push(match[1]);
+  }
+  return images;
+}
+
 // Extract a readable source name from a URL (used for RSS items that lack a source field)
 function extractSourceName(url) {
   try {
@@ -163,10 +193,35 @@ router.post('/fetch', async (req, res) => {
   }
 
   // Remove articles deleted/removed by NewsAPI or missing content
-  const cleanArticles = rawArticles.filter(
+  let cleanArticles = rawArticles.filter(
     (a) => a.title && a.title !== '[Removed]' && a.description
   );
   console.log(`[DEBUG] Articles after cleaning (removing [Removed] etc): ${cleanArticles.length}`);
+
+  // Validate images: check URLs are accessible and extract from content if needed
+  cleanArticles = await Promise.all(cleanArticles.map(async (article) => {
+    let imageUrl = null;
+
+    // Try main image first
+    if (article.urlToImage) {
+      imageUrl = await validateImageUrl(article.urlToImage);
+    }
+
+    // If main image fails, try extracting from content
+    if (!imageUrl && article.content) {
+      const contentImages = extractImagesFromContent(article.content);
+      for (const img of contentImages) {
+        const validated = await validateImageUrl(img);
+        if (validated) {
+          imageUrl = validated;
+          break;
+        }
+      }
+    }
+
+    return { ...article, urlToImage: imageUrl };
+  }));
+  console.log(`[DEBUG] Articles after image validation: ${cleanArticles.length}`);
 
   if (cleanArticles.length === 0) {
     console.log(`[DEBUG] No clean articles, returning empty results`);
@@ -196,6 +251,10 @@ Below is a numbered list of item titles and descriptions. Keep an item if it is 
 - IMPORTANT: For tenders, ONLY keep if the title or description mentions: deadline, bid, quote, application, closing, submission, or tender number
 - Any notice containing: tender, auction, procurement, bidding, RFP, ITB, "notice inviting"
 - Department/Ministry announcements for ${topic} sector
+
+🔴 IMAGE RELEVANCE:
+- Filter out articles about celebrities, sports, entertainment, or general lifestyle unrelated to ${topic}
+- Keep articles that are clearly business/industry focused
 
 Filter out fake tenders that don't have actual bidding details.
 
@@ -279,9 +338,13 @@ ${articlesBlock}`,
     console.error('Claude summarisation error:', err.message);
   }
 
-  // ── Step 4: Merge articles + summaries ───────────────────
+  // ── Step 4: Merge articles + summaries + quality checks ───────────────────
   const articles = validArticles.map((article, i) => {
     const summaryObj = summaries.find((s) => s.index === i + 1);
+
+    // Quality check: only include image if validated
+    const hasImage = article.urlToImage ? true : false;
+
     return {
       id: i + 1,
       title: article.title,
@@ -289,10 +352,12 @@ ${articlesBlock}`,
       publishedAt: article.publishedAt,
       url: article.url,
       urlToImage: article.urlToImage || null,
+      hasImage: hasImage,
       summary: summaryObj?.summary || article.description || 'No summary available.',
     };
   });
 
+  console.log(`[DEBUG] Final articles with image validation: ${articles.filter(a => a.hasImage).length} with images, ${articles.filter(a => !a.hasImage).length} without`);
   res.json({ articles });
 });
 
