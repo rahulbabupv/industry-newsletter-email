@@ -217,9 +217,12 @@ router.post('/send', requireAuth, async (req, res) => {
 
   const results = [];
 
+  console.log(`[EMAIL] Starting to send ${validEmails.length} emails:`, validEmails);
+
   for (const email of validEmails) {
     try {
-      await resend.emails.send({
+      console.log(`[EMAIL] Sending to: ${email}`);
+      const resendResponse = await resend.emails.send({
         from: 'Newsletter <noreply@resend.dev>',
         to: email,
         subject: `Check out: ${newsletterTitle}`,
@@ -232,6 +235,7 @@ router.post('/send', requireAuth, async (req, res) => {
           </div>
         `
       });
+      console.log(`[EMAIL] ✅ Success to ${email}:`, resendResponse);
 
       try {
         await supabase
@@ -248,10 +252,12 @@ router.post('/send', requireAuth, async (req, res) => {
 
       results.push({ email, status: 'sent' });
     } catch (error) {
-      console.error(`Failed to send email to ${email}:`, error);
+      console.error(`[EMAIL] ❌ Failed to send email to ${email}:`, error.message);
       results.push({ email, status: 'failed', error: error.message });
     }
   }
+
+  console.log(`[EMAIL] Summary: ${validEmails.length} total, results:`, results);
 
   const successCount = results.filter(r => r.status === 'sent').length;
   const failureCount = results.filter(r => r.status === 'failed').length;
