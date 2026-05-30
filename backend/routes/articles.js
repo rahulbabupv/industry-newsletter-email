@@ -8,6 +8,57 @@ const rssParser = new RssParser({ timeout: 10000 });
 
 const anthropic = new Anthropic();
 
+// Helper: Extract real publication name from Google News redirect URL
+async function extractRealSourceFromGoogleNews(googleNewsUrl) {
+  if (!googleNewsUrl || !googleNewsUrl.includes('news.google.com')) return null;
+
+  try {
+    // Google News URLs have format: news.google.com/articles/XXXXX?hl=...
+    // They redirect to the real publication
+    const response = await axios.get(googleNewsUrl, {
+      timeout: 3000,
+      maxRedirects: 5,
+      validateStatus: () => true // Accept any status
+    });
+
+    // Check final URL after redirects
+    const finalUrl = response.request?.res?.responseUrl || response.config?.url || googleNewsUrl;
+
+    if (finalUrl && !finalUrl.includes('news.google.com')) {
+      // Extract domain from final URL
+      try {
+        const url = new URL(finalUrl);
+        const domain = url.hostname.replace('www.', '');
+
+        // Map common domains to friendly names
+        const known = {
+          'economictimes.indiatimes.com': 'Economic Times',
+          'livemint.com':                 'Livemint',
+          'thehindubusinessline.com':     'BusinessLine',
+          'business-standard.com':        'Business Standard',
+          'timesofindia.indiatimes.com':  'Times of India',
+          'ndtv.com':                     'NDTV',
+          'hindustantimes.com':           'Hindustan Times',
+          'thehindu.com':                 'The Hindu',
+          'financialexpress.com':         'Financial Express',
+          'moneycontrol.com':             'Moneycontrol',
+          'reuters.com':                  'Reuters',
+          'bbc.com':                      'BBC',
+          'apnews.com':                   'AP News',
+          'reuters.com':                  'Reuters',
+        };
+
+        return known[domain] || domain;
+      } catch (urlErr) {
+        return null;
+      }
+    }
+  } catch (err) {
+    return null;
+  }
+  return null;
+}
+
 // Helper: Validate image URL is accessible and good quality
 async function validateImageUrl(url) {
   if (!url) return null;
@@ -140,23 +191,43 @@ router.post('/fetch', async (req, res) => {
     if (globalRes.status !== 'fulfilled') console.log(`[DEBUG] NewsAPI tender query failed: ${globalRes.reason?.message}`);
 
     // Normalise RSS items into the same shape as NewsAPI articles
-    const toRssArticles = (result) => {
+    const toRssArticles = async (result) => {
       if (result.status !== 'fulfilled') return [];
-      return (result.value.items || []).map((item) => ({
-        title:       item.title || '',
-        description: item.contentSnippet || item.summary || '',
-        url:         item.link  || '',
-        publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-        source:      { name: item.source?.name || extractSourceName(item.link) },
-        urlToImage:  null,
-        content:     '',
-      }));
+      const articles = [];
+
+      for (const item of (result.value.items || [])) {
+        let sourceName = item.source?.name || extractSourceName(item.link);
+
+        // If it's from Google News, try to extract the real publication
+        if (sourceName.includes('news.google.com') || sourceName === 'Unknown Source') {
+          const realSource = await extractRealSourceFromGoogleNews(item.link);
+          if (realSource) {
+            sourceName = realSource;
+          }
+        }
+
+        articles.push({
+          title:       item.title || '',
+          description: item.contentSnippet || item.summary || '',
+          url:         item.link  || '',
+          publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          source:      { name: sourceName },
+          urlToImage:  null,
+          content:     '',
+        });
+      }
+
+      return articles;
     };
 
+    const rss1Articles = await toRssArticles(rss1Res);
+    const rss2Articles = await toRssArticles(rss2Res);
+    const rssTenderArticles = await toRssArticles(rssTenderRes);
+
     const rssArticles = [
-      ...toRssArticles(rss1Res),
-      ...toRssArticles(rss2Res),
-      ...toRssArticles(rssTenderRes) // Merging structural tender updates into processing queue
+      ...rss1Articles,
+      ...rss2Articles,
+      ...rssTenderArticles
     ];
     console.log(`[DEBUG] RSS feeds returned ${rssArticles.length} articles total`);
 
