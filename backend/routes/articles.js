@@ -8,24 +8,44 @@ const rssParser = new RssParser({ timeout: 10000 });
 
 const anthropic = new Anthropic();
 
+// Helper: Extract real publication name from article title (often formatted as "Title - Publication")
+function extractSourceFromTitle(title) {
+  if (!title) return null;
+
+  // Check if title ends with " - [Publication Name]" format
+  const parts = title.split(' - ');
+  if (parts.length > 1) {
+    const potentialSource = parts[parts.length - 1].trim();
+    // Only return if it looks like a publication name (not a number or single word)
+    if (potentialSource.length > 2 && potentialSource.length < 100) {
+      return potentialSource;
+    }
+  }
+  return null;
+}
+
 // Helper: Extract real publication name from Google News redirect URL
-async function extractRealSourceFromGoogleNews(googleNewsUrl) {
+async function extractRealSourceFromGoogleNews(googleNewsUrl, title) {
   if (!googleNewsUrl || !googleNewsUrl.includes('news.google.com')) return null;
 
+  // First, try to extract from title (most reliable for Google News)
+  const titleSource = extractSourceFromTitle(title);
+  if (titleSource) {
+    return titleSource;
+  }
+
+  // Fallback: try to follow redirect
   try {
-    // Google News URLs have format: news.google.com/articles/XXXXX?hl=...
-    // They redirect to the real publication
-    const response = await axios.get(googleNewsUrl, {
+    const response = await axios.head(googleNewsUrl, {
       timeout: 3000,
       maxRedirects: 5,
-      validateStatus: () => true // Accept any status
+      validateStatus: () => true
     });
 
-    // Check final URL after redirects
-    const finalUrl = response.request?.res?.responseUrl || response.config?.url || googleNewsUrl;
+    // Get final URL
+    const finalUrl = response.headers.location || response.request?.path || googleNewsUrl;
 
     if (finalUrl && !finalUrl.includes('news.google.com')) {
-      // Extract domain from final URL
       try {
         const url = new URL(finalUrl);
         const domain = url.hostname.replace('www.', '');
@@ -45,7 +65,9 @@ async function extractRealSourceFromGoogleNews(googleNewsUrl) {
           'reuters.com':                  'Reuters',
           'bbc.com':                      'BBC',
           'apnews.com':                   'AP News',
-          'reuters.com':                  'Reuters',
+          'thewire.in':                   'The Wire',
+          'deccanchronicle.com':          'Deccan Chronicle',
+          'theprint.in':                  'ThePrint',
         };
 
         return known[domain] || domain;
@@ -198,9 +220,9 @@ router.post('/fetch', async (req, res) => {
       for (const item of (result.value.items || [])) {
         let sourceName = item.source?.name || extractSourceName(item.link);
 
-        // If it's from Google News, try to extract the real publication
-        if (sourceName.includes('news.google.com') || sourceName === 'Unknown Source') {
-          const realSource = await extractRealSourceFromGoogleNews(item.link);
+        // If it's from Google News, try to extract the real publication from title or redirect
+        if (sourceName.includes('news.google.com') || item.link?.includes('news.google.com')) {
+          const realSource = await extractRealSourceFromGoogleNews(item.link, item.title);
           if (realSource) {
             sourceName = realSource;
           }
